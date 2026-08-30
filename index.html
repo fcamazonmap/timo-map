@@ -80,16 +80,18 @@
       top: 20px;
       left: 20px;
       background-color: var(--bg-header);
+      background-color: color-mix(in srgb, var(--bg-header) 78%, transparent);
       color: var(--text-header);
       padding: 10px 16px;
       border-radius: 12px;
       display: flex;
       align-items: center;
       gap: 10px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.16);
       z-index: 1500;
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       max-width: 90%;
       box-sizing: border-box;
     }
@@ -173,6 +175,7 @@
     #selection-banner {
       display: none;
       background: var(--sidebar-bg);
+      background: color-mix(in srgb, var(--sidebar-bg) 80%, transparent);
       border: 2px solid var(--fc-color);
       border-radius: 12px;
       padding: 8px 16px;
@@ -180,7 +183,9 @@
       top: 90px;
       left: 20px;
       z-index: 2000;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.14);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
       font-size: 13px;
       color: var(--card-text);
       align-items: center;
@@ -247,14 +252,16 @@
       width: 320px;
       max-height: calc(100% - 320px);
       background-color: var(--sidebar-bg);
+      background-color: color-mix(in srgb, var(--sidebar-bg) 82%, transparent);
       border-radius: 12px;
       display: flex;
       flex-direction: column;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.14);
       z-index: 1000;
       overflow: hidden;
       border: 1px solid rgba(0,0,0,0.08);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
     }
 
     #sidebar-header {
@@ -346,12 +353,14 @@
       right: 20px;
       width: 320px;
       background-color: var(--sidebar-bg);
+      background-color: color-mix(in srgb, var(--sidebar-bg) 82%, transparent);
       border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.14);
       z-index: 1500;
       overflow: hidden;
       border: 1px solid rgba(0,0,0,0.1);
-      backdrop-filter: blur(8px);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
       display: flex;
       flex-direction: column;
     }
@@ -846,8 +855,9 @@
       left: 20px;
       z-index: 2000;
       background-color: var(--bg-header);
+      background-color: color-mix(in srgb, var(--bg-header) 78%, transparent);
       color: var(--text-header);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 50%;
       width: 44px;
       height: 44px;
@@ -855,8 +865,9 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.16);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
       transition: transform 0.2s, background 0.2s;
     }
 
@@ -881,8 +892,9 @@
       left: 76px;
       z-index: 2000;
       background-color: var(--bg-header);
+      background-color: color-mix(in srgb, var(--bg-header) 78%, transparent);
       color: var(--text-header);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 50%;
       width: 44px;
       height: 44px;
@@ -890,8 +902,9 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-      backdrop-filter: blur(8px);
+      box-shadow: 0 8px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.16);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
       transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
     }
 
@@ -1752,7 +1765,7 @@
     <div id="settings-modal-overlay">
       <div id="settings-modal">
         <div id="settings-header">
-          <h2 class="settings-header-title">Application Settings <span id="app-version-tag">v6.6</span></h2>
+          <h2 class="settings-header-title">Application Settings <span id="app-version-tag">v6.7</span></h2>
           <button type="button" class="close-modal-btn" onclick="closeSettingsModal()" title="Close settings" aria-label="Close settings">
             <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
