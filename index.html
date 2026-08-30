@@ -518,6 +518,11 @@
       box-shadow: 0 4px 8px rgba(0,0,0,0.12);
     }
 
+    .fc-card:focus-visible {
+      outline: 2px solid var(--accent-color);
+      outline-offset: 2px;
+    }
+
     .fc-card.rail-card {
       border-color: var(--rail-color) !important;
     }
@@ -1176,26 +1181,54 @@
     .theme-presets {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
+      gap: 10px;
     }
 
     .preset-btn {
-      padding: 8px 12px;
-      border: 2px solid #ccc;
-      border-radius: 8px;
-      background: #f8f9fa;
+      padding: 10px;
+      border: 2px solid var(--dropdown-border, #d8dee0);
+      border-radius: 10px;
+      background: var(--card-bg, #f8f9fa);
       cursor: pointer;
+      font-family: var(--font-body);
       font-weight: 600;
-      font-size: 12px;
-      color: #333;
-      text-align: center;
-      transition: all 0.2s;
+      font-size: 11.5px;
+      color: var(--card-text, #333);
+      text-align: left;
+      transition: border-color 0.15s ease, transform 0.1s ease;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .preset-btn:hover {
+      transform: translateY(-1px);
     }
 
     .preset-btn.active {
-      border-color: var(--accent-color);
-      background: var(--accent-color);
-      color: var(--accent-text);
+      border-color: var(--accent-color, #2dd4bf);
+      box-shadow: 0 0 0 1px var(--accent-color, #2dd4bf);
+    }
+
+    .preset-swatch {
+      flex-shrink: 0;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .preset-swatch span {
+      display: block;
+    }
+
+    .preset-name {
+      flex: 1;
+      line-height: 1.3;
     }
 
     .section-divider {
@@ -1240,19 +1273,64 @@
     }
 
     .setting-group input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
+      appearance: none;
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+      border: 1.5px solid var(--dropdown-border);
+      background: var(--card-bg);
       cursor: pointer;
+      flex-shrink: 0;
+      position: relative;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .setting-group input[type="checkbox"]:hover {
+      border-color: var(--accent-color);
+    }
+
+    .setting-group input[type="checkbox"]:checked {
+      background: var(--accent-color);
+      border-color: var(--accent-color);
+    }
+
+    .setting-group input[type="checkbox"]:checked::after {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 2px;
+      width: 5px;
+      height: 10px;
+      border: solid var(--accent-text);
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
     }
 
     .setting-group input[type="number"], .setting-group select {
-      padding: 4px 8px;
+      padding: 6px 28px 6px 10px;
       border-radius: 6px;
-      border: 1px solid #ccc;
+      border: 1.5px solid var(--dropdown-border);
       font-size: 12px;
+      font-family: var(--font-body);
       background: var(--card-bg);
       color: var(--card-text);
       outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .setting-group input[type="number"]:focus, .setting-group select:focus {
+      border-color: var(--accent-color);
+    }
+
+    .setting-group select {
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      background-image: linear-gradient(45deg, transparent 50%, var(--card-text) 50%), linear-gradient(135deg, var(--card-text) 50%, transparent 50%);
+      background-position: calc(100% - 16px) center, calc(100% - 11px) center;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
     }
 
     .setting-group input[type="number"] {
@@ -1290,24 +1368,48 @@
       box-sizing: border-box;
       padding: 7px 9px;
       border-radius: 6px;
-      border: 1px solid #ccc;
+      border: 1.5px solid var(--dropdown-border);
       font-size: 12px;
+      font-family: var(--font-body);
       background: var(--card-bg);
       color: var(--card-text);
       outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .facility-form-grid input:focus,
+    .facility-form-grid select:focus {
+      border-color: var(--accent-color);
+    }
+
+    .facility-form-grid select {
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      padding-right: 28px;
+      background-image: linear-gradient(45deg, transparent 50%, var(--card-text) 50%), linear-gradient(135deg, var(--card-text) 50%, transparent 50%);
+      background-position: calc(100% - 16px) center, calc(100% - 11px) center;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
     }
 
     .form-submit-btn {
       background: var(--accent-color);
       color: var(--accent-text);
       border: none;
-      padding: 9px 16px;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 12px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 12.5px;
       cursor: pointer;
       transition: background 0.2s;
-      align-self: flex-start;
+      align-self: stretch;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 38px;
     }
 
     .form-submit-btn:hover {
@@ -1349,15 +1451,20 @@
     #csv-import-textarea {
       width: 100%;
       box-sizing: border-box;
-      padding: 8px 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+      padding: 10px 12px 16px 12px;
+      border-radius: 8px;
+      border: 1.5px solid var(--dropdown-border);
       font-size: 11px;
       font-family: 'SFMono-Regular', Consolas, monospace;
       background: var(--card-bg);
       color: var(--card-text);
       resize: vertical;
       outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    #csv-import-textarea:focus {
+      border-color: var(--accent-color);
     }
 
     .csv-format-hint {
@@ -1570,7 +1677,7 @@
     <div id="settings-modal-overlay">
       <div id="settings-modal">
         <div id="settings-header">
-          <h2 class="settings-header-title">Application Settings <span id="app-version-tag">v10.0.0</span></h2>
+          <h2 class="settings-header-title">Application Settings <span id="app-version-tag">v6.1</span></h2>
           <button type="button" class="close-modal-btn" onclick="closeSettingsModal()" title="Close settings" aria-label="Close settings">
             <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
@@ -1609,14 +1716,7 @@
             <div class="settings-tab-content">
               <fieldset class="theme-preset-fieldset">
                 <legend>Theme Presets</legend>
-                <div class="theme-presets">
-                  <button class="preset-btn active" id="btn-preset-default" onclick="applyPreset('default')">Midnight Teal</button>
-                  <button class="preset-btn" id="btn-preset-light" onclick="applyPreset('light')">Soft Linen</button>
-                  <button class="preset-btn" id="btn-preset-rose" onclick="applyPreset('rose')">Mauve Dusk</button>
-                  <button class="preset-btn" id="btn-preset-vscode" onclick="applyPreset('vscode')">Graphite</button>
-                  <button class="preset-btn" id="btn-preset-ocean" onclick="applyPreset('ocean')">Deep Harbor</button>
-                  <button class="preset-btn" id="btn-preset-custom" onclick="applyPreset('custom')">Custom Theme</button>
-                </div>
+                <div class="theme-presets" id="theme-presets-container"></div>
               </fieldset>
 
               <div id="custom-theme-controls" hidden>
@@ -1974,121 +2074,286 @@
 
     const presets = {
       default: {
-        '--bg-header': 'rgba(22, 35, 44, 0.95)',
-        '--text-header': '#eef2f1',
-        '--accent-color': '#2dd4bf',
-        '--accent-hover': '#22b8a5',
-        '--accent-text': '#0b1f1c',
-        '--sidebar-bg': '#ffffff',
-        '--sidebar-header-bg': '#16232c',
-        '--sidebar-header-text': '#eef2f1',
-        '--card-bg': '#ffffff',
-        '--card-text': '#1c2b30',
-        '--fc-color': '#3b6ea5',
-        '--rail-color': '#8a6fa8',
-        '--rail-bg-light': '#f1edf7',
-        '--selected-color': '#2f8f6f',
-        '--circle-stroke': '#2dd4bf',
-        '--circle-fill': '#2dd4bf',
-        '--circle-opacity': 0.15,
-        '--dropdown-bg': '#ffffff',
-        '--dropdown-text': '#1c2b30',
-        '--dropdown-hover-bg': '#eef4f3',
-        '--dropdown-border': '#d8dee0'
+        label: 'Midnight Teal',
+        swatch: ['#16232c', '#2dd4bf', '#ffffff', '#3b6ea5'],
+        vars: {
+          '--bg-header': 'rgba(22, 35, 44, 0.95)',
+          '--text-header': '#eef2f1',
+          '--accent-color': '#2dd4bf',
+          '--accent-hover': '#22b8a5',
+          '--accent-text': '#0b1f1c',
+          '--sidebar-bg': '#ffffff',
+          '--sidebar-header-bg': '#16232c',
+          '--sidebar-header-text': '#eef2f1',
+          '--card-bg': '#ffffff',
+          '--card-text': '#1c2b30',
+          '--fc-color': '#3b6ea5',
+          '--rail-color': '#8a6fa8',
+          '--rail-bg-light': '#f1edf7',
+          '--selected-color': '#2f8f6f',
+          '--circle-stroke': '#2dd4bf',
+          '--circle-fill': '#2dd4bf',
+          '--circle-opacity': 0.15,
+          '--dropdown-bg': '#ffffff',
+          '--dropdown-text': '#1c2b30',
+          '--dropdown-hover-bg': '#eef4f3',
+          '--dropdown-border': '#d8dee0'
+        }
       },
       light: {
-        '--bg-header': 'rgba(250, 248, 245, 0.95)',
-        '--text-header': '#33302b',
-        '--accent-color': '#6b8f71',
-        '--accent-hover': '#597a5e',
-        '--accent-text': '#ffffff',
-        '--sidebar-bg': '#fdfcfa',
-        '--sidebar-header-bg': '#eee8de',
-        '--sidebar-header-text': '#33302b',
-        '--card-bg': '#ffffff',
-        '--card-text': '#33302b',
-        '--fc-color': '#4a7fa5',
-        '--rail-color': '#9a7ab0',
-        '--rail-bg-light': '#f1ecf6',
-        '--selected-color': '#5a8a5f',
-        '--circle-stroke': '#6b8f71',
-        '--circle-fill': '#8fae8f',
-        '--circle-opacity': 0.14,
-        '--dropdown-bg': '#ffffff',
-        '--dropdown-text': '#33302b',
-        '--dropdown-hover-bg': '#f2ede4',
-        '--dropdown-border': '#e2dcd1'
+        label: 'Soft Linen',
+        swatch: ['#eee8de', '#6b8f71', '#fdfcfa', '#4a7fa5'],
+        vars: {
+          '--bg-header': 'rgba(250, 248, 245, 0.95)',
+          '--text-header': '#33302b',
+          '--accent-color': '#6b8f71',
+          '--accent-hover': '#597a5e',
+          '--accent-text': '#ffffff',
+          '--sidebar-bg': '#fdfcfa',
+          '--sidebar-header-bg': '#eee8de',
+          '--sidebar-header-text': '#33302b',
+          '--card-bg': '#ffffff',
+          '--card-text': '#33302b',
+          '--fc-color': '#4a7fa5',
+          '--rail-color': '#9a7ab0',
+          '--rail-bg-light': '#f1ecf6',
+          '--selected-color': '#5a8a5f',
+          '--circle-stroke': '#6b8f71',
+          '--circle-fill': '#8fae8f',
+          '--circle-opacity': 0.14,
+          '--dropdown-bg': '#ffffff',
+          '--dropdown-text': '#33302b',
+          '--dropdown-hover-bg': '#f2ede4',
+          '--dropdown-border': '#e2dcd1'
+        }
       },
       rose: {
-        '--bg-header': 'rgba(58, 42, 53, 0.95)',
-        '--text-header': '#f3e8ee',
-        '--accent-color': '#c98a9c',
-        '--accent-hover': '#b8748a',
-        '--accent-text': '#2c1a22',
-        '--sidebar-bg': '#fbf6f8',
-        '--sidebar-header-bg': '#4a3542',
-        '--sidebar-header-text': '#f3e8ee',
-        '--card-bg': '#ffffff',
-        '--card-text': '#3a2a35',
-        '--fc-color': '#7d8ea8',
-        '--rail-color': '#a077a0',
-        '--rail-bg-light': '#f2ebf2',
-        '--selected-color': '#6e9576',
-        '--circle-stroke': '#c98a9c',
-        '--circle-fill': '#c98a9c',
-        '--circle-opacity': 0.16,
-        '--dropdown-bg': '#fbf6f8',
-        '--dropdown-text': '#3a2a35',
-        '--dropdown-hover-bg': '#f0e2e8',
-        '--dropdown-border': '#e3cdd7'
+        label: 'Mauve Dusk',
+        swatch: ['#4a3542', '#c98a9c', '#fbf6f8', '#7d8ea8'],
+        vars: {
+          '--bg-header': 'rgba(58, 42, 53, 0.95)',
+          '--text-header': '#f3e8ee',
+          '--accent-color': '#c98a9c',
+          '--accent-hover': '#b8748a',
+          '--accent-text': '#2c1a22',
+          '--sidebar-bg': '#fbf6f8',
+          '--sidebar-header-bg': '#4a3542',
+          '--sidebar-header-text': '#f3e8ee',
+          '--card-bg': '#ffffff',
+          '--card-text': '#3a2a35',
+          '--fc-color': '#7d8ea8',
+          '--rail-color': '#a077a0',
+          '--rail-bg-light': '#f2ebf2',
+          '--selected-color': '#6e9576',
+          '--circle-stroke': '#c98a9c',
+          '--circle-fill': '#c98a9c',
+          '--circle-opacity': 0.16,
+          '--dropdown-bg': '#fbf6f8',
+          '--dropdown-text': '#3a2a35',
+          '--dropdown-hover-bg': '#f0e2e8',
+          '--dropdown-border': '#e3cdd7'
+        }
       },
       vscode: {
-        '--bg-header': 'rgba(35, 39, 46, 0.95)',
-        '--text-header': '#e4e2de',
-        '--accent-color': '#d9a066',
-        '--accent-hover': '#c78e54',
-        '--accent-text': '#23272e',
-        '--sidebar-bg': '#2b2f37',
-        '--sidebar-header-bg': '#1e2127',
-        '--sidebar-header-text': '#e4e2de',
-        '--card-bg': '#2b2f37',
-        '--card-text': '#dcdad6',
-        '--fc-color': '#7ea6c9',
-        '--rail-color': '#b799c7',
-        '--rail-bg-light': '#3a3541',
-        '--selected-color': '#7fae7f',
-        '--circle-stroke': '#d9a066',
-        '--circle-fill': '#d9a066',
-        '--circle-opacity': 0.18,
-        '--dropdown-bg': '#2b2f37',
-        '--dropdown-text': '#dcdad6',
-        '--dropdown-hover-bg': '#383d46',
-        '--dropdown-border': '#454a53'
+        label: 'Graphite',
+        swatch: ['#1e2127', '#d9a066', '#2b2f37', '#7ea6c9'],
+        vars: {
+          '--bg-header': 'rgba(35, 39, 46, 0.95)',
+          '--text-header': '#e4e2de',
+          '--accent-color': '#d9a066',
+          '--accent-hover': '#c78e54',
+          '--accent-text': '#23272e',
+          '--sidebar-bg': '#2b2f37',
+          '--sidebar-header-bg': '#1e2127',
+          '--sidebar-header-text': '#e4e2de',
+          '--card-bg': '#2b2f37',
+          '--card-text': '#dcdad6',
+          '--fc-color': '#7ea6c9',
+          '--rail-color': '#b799c7',
+          '--rail-bg-light': '#3a3541',
+          '--selected-color': '#7fae7f',
+          '--circle-stroke': '#d9a066',
+          '--circle-fill': '#d9a066',
+          '--circle-opacity': 0.18,
+          '--dropdown-bg': '#2b2f37',
+          '--dropdown-text': '#dcdad6',
+          '--dropdown-hover-bg': '#383d46',
+          '--dropdown-border': '#454a53'
+        }
       },
       ocean: {
-        '--bg-header': 'rgba(20, 42, 61, 0.95)',
-        '--text-header': '#e6f1ef',
-        '--accent-color': '#5eb1a3',
-        '--accent-hover': '#4c9a8d',
-        '--accent-text': '#0d2019',
-        '--sidebar-bg': '#eef4f3',
-        '--sidebar-header-bg': '#142a3d',
-        '--sidebar-header-text': '#e6f1ef',
-        '--card-bg': '#ffffff',
-        '--card-text': '#1c2e33',
-        '--fc-color': '#4a7fa5',
-        '--rail-color': '#9077b0',
-        '--rail-bg-light': '#ece7f4',
-        '--selected-color': '#4f9a6d',
-        '--circle-stroke': '#5eb1a3',
-        '--circle-fill': '#5eb1a3',
-        '--circle-opacity': 0.15,
-        '--dropdown-bg': '#ffffff',
-        '--dropdown-text': '#1c2e33',
-        '--dropdown-hover-bg': '#e4eeed',
-        '--dropdown-border': '#cbdbd8'
+        label: 'Deep Harbor',
+        swatch: ['#142a3d', '#5eb1a3', '#eef4f3', '#4a7fa5'],
+        vars: {
+          '--bg-header': 'rgba(20, 42, 61, 0.95)',
+          '--text-header': '#e6f1ef',
+          '--accent-color': '#5eb1a3',
+          '--accent-hover': '#4c9a8d',
+          '--accent-text': '#0d2019',
+          '--sidebar-bg': '#eef4f3',
+          '--sidebar-header-bg': '#142a3d',
+          '--sidebar-header-text': '#e6f1ef',
+          '--card-bg': '#ffffff',
+          '--card-text': '#1c2e33',
+          '--fc-color': '#4a7fa5',
+          '--rail-color': '#9077b0',
+          '--rail-bg-light': '#ece7f4',
+          '--selected-color': '#4f9a6d',
+          '--circle-stroke': '#5eb1a3',
+          '--circle-fill': '#5eb1a3',
+          '--circle-opacity': 0.15,
+          '--dropdown-bg': '#ffffff',
+          '--dropdown-text': '#1c2e33',
+          '--dropdown-hover-bg': '#e4eeed',
+          '--dropdown-border': '#cbdbd8'
+        }
+      },
+      amber: {
+        label: 'Onyx Amber',
+        swatch: ['#141210', '#e0a458', '#1c1a17', '#7fa8c9'],
+        vars: {
+          '--bg-header': 'rgba(18, 16, 14, 0.95)',
+          '--text-header': '#f0ece4',
+          '--accent-color': '#e0a458',
+          '--accent-hover': '#cc9148',
+          '--accent-text': '#1a1410',
+          '--sidebar-bg': '#1c1a17',
+          '--sidebar-header-bg': '#141210',
+          '--sidebar-header-text': '#f0ece4',
+          '--card-bg': '#1c1a17',
+          '--card-text': '#e8e3da',
+          '--fc-color': '#7fa8c9',
+          '--rail-color': '#b891c4',
+          '--rail-bg-light': '#322b3a',
+          '--selected-color': '#8fbf7f',
+          '--circle-stroke': '#e0a458',
+          '--circle-fill': '#e0a458',
+          '--circle-opacity': 0.18,
+          '--dropdown-bg': '#1c1a17',
+          '--dropdown-text': '#e8e3da',
+          '--dropdown-hover-bg': '#28251f',
+          '--dropdown-border': '#3a352d'
+        }
+      },
+      forest: {
+        label: 'Forest Night',
+        swatch: ['#0f1712', '#6fbf94', '#172019', '#7fa3c9'],
+        vars: {
+          '--bg-header': 'rgba(14, 22, 18, 0.95)',
+          '--text-header': '#e6efe8',
+          '--accent-color': '#6fbf94',
+          '--accent-hover': '#5da881',
+          '--accent-text': '#0d1f16',
+          '--sidebar-bg': '#172019',
+          '--sidebar-header-bg': '#0f1712',
+          '--sidebar-header-text': '#e6efe8',
+          '--card-bg': '#172019',
+          '--card-text': '#dce8df',
+          '--fc-color': '#7fa3c9',
+          '--rail-color': '#a988c4',
+          '--rail-bg-light': '#2a2436',
+          '--selected-color': '#6fbf94',
+          '--circle-stroke': '#6fbf94',
+          '--circle-fill': '#6fbf94',
+          '--circle-opacity': 0.16,
+          '--dropdown-bg': '#172019',
+          '--dropdown-text': '#dce8df',
+          '--dropdown-hover-bg': '#202a22',
+          '--dropdown-border': '#34402f'
+        }
+      },
+      indigo: {
+        label: 'Indigo Dusk',
+        swatch: ['#14152a', '#8b93e8', '#1c1e38', '#7ab0d9'],
+        vars: {
+          '--bg-header': 'rgba(22, 24, 46, 0.95)',
+          '--text-header': '#e8e8f5',
+          '--accent-color': '#8b93e8',
+          '--accent-hover': '#767ed1',
+          '--accent-text': '#14142a',
+          '--sidebar-bg': '#1c1e38',
+          '--sidebar-header-bg': '#14152a',
+          '--sidebar-header-text': '#e8e8f5',
+          '--card-bg': '#1c1e38',
+          '--card-text': '#dcdcf0',
+          '--fc-color': '#7ab0d9',
+          '--rail-color': '#b98ed4',
+          '--rail-bg-light': '#322e44',
+          '--selected-color': '#7fc99a',
+          '--circle-stroke': '#8b93e8',
+          '--circle-fill': '#8b93e8',
+          '--circle-opacity': 0.17,
+          '--dropdown-bg': '#1c1e38',
+          '--dropdown-text': '#dcdcf0',
+          '--dropdown-hover-bg': '#26284a',
+          '--dropdown-border': '#3a3d5e'
+        }
+      },
+      cocoa: {
+        label: 'Cocoa Dark',
+        swatch: ['#1a130f', '#cb8a5e', '#241b16', '#7fa3c2'],
+        vars: {
+          '--bg-header': 'rgba(30, 22, 18, 0.95)',
+          '--text-header': '#f0e6dd',
+          '--accent-color': '#cb8a5e',
+          '--accent-hover': '#b8794f',
+          '--accent-text': '#1e140d',
+          '--sidebar-bg': '#241b16',
+          '--sidebar-header-bg': '#1a130f',
+          '--sidebar-header-text': '#f0e6dd',
+          '--card-bg': '#241b16',
+          '--card-text': '#ecdfd4',
+          '--fc-color': '#7fa3c2',
+          '--rail-color': '#b48ec2',
+          '--rail-bg-light': '#34293a',
+          '--selected-color': '#8fbf7f',
+          '--circle-stroke': '#cb8a5e',
+          '--circle-fill': '#cb8a5e',
+          '--circle-opacity': 0.18,
+          '--dropdown-bg': '#241b16',
+          '--dropdown-text': '#ecdfd4',
+          '--dropdown-hover-bg': '#2e2219',
+          '--dropdown-border': '#453529'
+        }
       }
     };
+
+    function renderThemePresetButtons() {
+      const container = document.getElementById('theme-presets-container');
+      if (!container) return;
+      let html = '';
+      Object.entries(presets).forEach(([key, preset]) => {
+        html += `
+          <button type="button" class="preset-btn" id="btn-preset-${key}" onclick="applyPreset('${key}')" aria-pressed="false">
+            <span class="preset-swatch">
+              <span style="background:${preset.swatch[0]}"></span>
+              <span style="background:${preset.swatch[1]}"></span>
+              <span style="background:${preset.swatch[2]}"></span>
+              <span style="background:${preset.swatch[3]}"></span>
+            </span>
+            <span class="preset-name">${preset.label}</span>
+          </button>
+        `;
+      });
+      html += `
+        <button type="button" class="preset-btn" id="btn-preset-custom" onclick="applyPreset('custom')" aria-pressed="false">
+          <span class="preset-swatch">
+            <span style="background:linear-gradient(135deg, #ff9a3c, #ff5e7e)"></span>
+            <span style="background:linear-gradient(135deg, #3ca7ff, #6effc0)"></span>
+            <span style="background:linear-gradient(135deg, #a06bff, #ff6bd6)"></span>
+            <span style="background:linear-gradient(135deg, #ffd23c, #3cffb0)"></span>
+          </span>
+          <span class="preset-name">Custom Theme</span>
+        </button>
+      `;
+      container.innerHTML = html;
+      const activeBtn = document.getElementById('btn-preset-default');
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+        activeBtn.setAttribute('aria-pressed', 'true');
+      }
+    }
+    renderThemePresetButtons();
 
     let activeCircleLayers = [];
     let currentRadiusItems = [];
@@ -2212,10 +2477,8 @@
           });
         }
 
-        document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+        setActivePresetButton(saved.activePreset || 'default');
         const restoredPreset = saved.activePreset || 'default';
-        const presetBtn = document.getElementById(`btn-preset-${restoredPreset}`);
-        if (presetBtn) presetBtn.classList.add('active');
 
         const customControls = document.getElementById('custom-theme-controls');
         if (customControls) customControls.hidden = restoredPreset !== 'custom';
@@ -2813,6 +3076,15 @@
     setupAutocomplete('route-from', 'dropdown-route-from');
     setupAutocomplete('route-to', 'dropdown-route-to');
 
+    document.getElementById('sidebar-content').addEventListener('keydown', function(e) {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const card = e.target.closest('.fc-card');
+      if (!card) return;
+      if (e.target.closest('.copy-coords-btn')) return;
+      e.preventDefault();
+      card.click();
+    });
+
     function toggleSettingsTab(tabId) {
       const tab = document.getElementById(tabId);
       const wasOpen = tab.classList.contains('open');
@@ -2887,9 +3159,20 @@
       return `#${r}${g}${b}`;
     }
 
+    function setActivePresetButton(name) {
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.classList.remove('active');
+        btn.setAttribute('aria-pressed', 'false');
+      });
+      const btn = document.getElementById(`btn-preset-${name}`);
+      if (btn) {
+        btn.classList.add('active');
+        btn.setAttribute('aria-pressed', 'true');
+      }
+    }
+
     function applyPreset(name) {
-      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(`btn-preset-${name}`).classList.add('active');
+      setActivePresetButton(name);
 
       const customControls = document.getElementById('custom-theme-controls');
       customControls.hidden = name !== 'custom';
@@ -2900,7 +3183,7 @@
         return;
       }
 
-      const theme = presets[name];
+      const theme = presets[name].vars;
       for (const [key, val] of Object.entries(theme)) {
         document.documentElement.style.setProperty(key, val);
       }
@@ -2911,15 +3194,13 @@
     }
 
     function updateCustomColor(varName, value) {
-      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById('btn-preset-custom').classList.add('active');
+      setActivePresetButton('custom');
       document.documentElement.style.setProperty(varName, value);
       saveSettingsToStorage();
     }
 
     function updateCircleStyle(prop, value) {
-      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById('btn-preset-custom').classList.add('active');
+      setActivePresetButton('custom');
 
       if (prop === 'stroke') document.documentElement.style.setProperty('--circle-stroke', value);
       if (prop === 'fill') document.documentElement.style.setProperty('--circle-fill', value);
@@ -2994,7 +3275,7 @@
 
         if (item.isOrigin) {
           html += `
-            <div class="fc-card truck-origin ${activeClass}" data-code="${item.code}" onclick="handleFacilityClickByCode('${item.code}')">
+            <div class="fc-card truck-origin ${activeClass}" data-code="${item.code}" role="button" tabindex="0" aria-label="${item.code}, ${item.city}, ${item.country}, truck origin" onclick="handleFacilityClickByCode('${item.code}')">
               <div class="fc-card-header">
                 <span class="fc-code">${item.code}</span>
                 <span class="truck-badge">TRUCK ORIGIN</span>
@@ -3006,7 +3287,7 @@
         } else if (item.type === 'rail') {
           const railBadge = item.dist != null ? `<span class="rail-dist">${item.dist.toFixed(1)} km</span>` : '<span style="margin-right:auto"></span>';
           html += `
-            <div class="fc-card rail-card ${activeClass}" data-code="${item.code}" onclick="handleFacilityClickByCode('${item.code}')">
+            <div class="fc-card rail-card ${activeClass}" data-code="${item.code}" role="button" tabindex="0" aria-label="${item.code}, ${item.city}, ${item.country}, rail hub" onclick="handleFacilityClickByCode('${item.code}')">
               <div class="fc-card-header">
                 <span class="fc-code">${RAIL_ICON_SVG}${item.code}</span>
                 ${railBadge}
@@ -3018,7 +3299,7 @@
         } else {
           const fcBadge = item.dist != null ? `<span class="fc-dist">${item.dist.toFixed(1)} km</span>` : '<span style="margin-right:auto"></span>';
           html += `
-            <div class="fc-card ${activeClass}" data-code="${item.code}" onclick="handleFacilityClickByCode('${item.code}')">
+            <div class="fc-card ${activeClass}" data-code="${item.code}" role="button" tabindex="0" aria-label="${item.code}, ${item.city}, ${item.country}" onclick="handleFacilityClickByCode('${item.code}')">
               <div class="fc-card-header">
                 <span class="fc-code">${item.code}</span>
                 ${fcBadge}
