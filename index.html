@@ -1520,7 +1520,7 @@
     <div id="settings-modal-overlay">
       <div id="settings-modal">
         <div id="settings-header">
-          <span class="settings-header-title">Application Settings <span id="app-version-tag">map v5.0</span></span>
+          <span class="settings-header-title">Application Settings <span id="app-version-tag">map v5.1</span></span>
           <button class="close-modal-btn" onclick="closeSettingsModal()">&times;</button>
         </div>
         <div id="settings-body">
@@ -2220,6 +2220,41 @@
     const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTDBQLEPnZv15sMA_ZfU5xhmrz1gQmPHpXtD_8EImLWzTuIlo7O435OcZRMgYG3fBl2BYSKdDitQMxw/pub?gid=0&single=true&output=csv';
     const SHEET_CACHE_KEY = 'amzFleetTracker.sheetFacilitiesCache.v1';
 
+    /* --- WRITE-BACK: Apps Script Web App endpoint (append-only) ---
+       Fill these in once the Apps Script is deployed (see the .gs code + deploy steps you were
+       given). APPS_SCRIPT_URL is the deployment URL ending in /exec; APPS_SCRIPT_TOKEN must match
+       the SHARED_TOKEN constant set inside the Apps Script. Until both are filled in, Add Facility
+       still works exactly as before (saves to this device only). */
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxa-butA8tChrB7QH0OmuwLn_K5avB76E6rg3si96mk1hLaNIMj0H3rKmGwLlggsuwU/exec';
+    const APPS_SCRIPT_TOKEN = 'apicaaqua';
+
+    async function submitFacilityToSheet(fc) {
+      if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf('PASTE_') === 0) {
+        return { success: false, error: 'not-configured' };
+      }
+      try {
+        const res = await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          // text/plain avoids a CORS preflight against Apps Script (which doesn't implement
+          // doOptions); Apps Script still receives the raw JSON string in e.postData.contents.
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            token: APPS_SCRIPT_TOKEN,
+            code: fc.code,
+            city: fc.city,
+            country: fc.country,
+            type: fc.type === 'rail' ? 'rail' : 'fc',
+            lat: fc.lat,
+            lng: fc.lng
+          })
+        });
+        const data = await res.json();
+        return data;
+      } catch (err) {
+        return { success: false, error: err.message || 'Network error reaching the shared sheet.' };
+      }
+    }
+
     function parseCSV(text) {
       const rows = [];
       let row = [], field = '', inQuotes = false;
@@ -2484,6 +2519,7 @@
       const newFacility = { code, city, country, lat: coords.lat, lng: coords.lng };
       if (type === 'rail') newFacility.type = 'rail';
 
+      // Save locally first so it's visible on this device immediately regardless of network state
       customFacilities.push(newFacility);
       saveCustomFacilities();
       rebuildFulfillmentCenters();
@@ -2492,9 +2528,28 @@
         document.getElementById(id).value = '';
       });
       document.getElementById('new-fac-type').value = 'fc';
-      statusEl.textContent = '';
-
       refreshAfterFacilityChange();
+
+      // Then push it to the shared Google Sheet so the rest of the team sees it too
+      const originalBtnText = addBtn.textContent;
+      addBtn.disabled = true;
+      addBtn.textContent = 'Saving to shared sheet…';
+      statusEl.classList.remove('error-text');
+      statusEl.textContent = 'Saving to shared sheet…';
+
+      const sheetResult = await submitFacilityToSheet(newFacility);
+
+      addBtn.disabled = false;
+      addBtn.textContent = originalBtnText;
+
+      if (sheetResult.success) {
+        statusEl.textContent = `Added — will appear for your team once the Sheet's published copy refreshes (usually a few minutes).`;
+      } else if (sheetResult.error === 'not-configured') {
+        statusEl.textContent = 'Saved on this device. (Shared-sheet write-back isn\'t configured yet.)';
+      } else {
+        statusEl.textContent = `Saved on this device only — could not write to the shared sheet: ${sheetResult.error || 'unknown error'}`;
+        statusEl.classList.add('error-text');
+      }
     }
 
     function removeCustomFacility(code) {
