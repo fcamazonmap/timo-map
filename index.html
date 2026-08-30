@@ -1520,7 +1520,7 @@
     <div id="settings-modal-overlay">
       <div id="settings-modal">
         <div id="settings-header">
-          <span class="settings-header-title">Application Settings <span id="app-version-tag">map v4.9</span></span>
+          <span class="settings-header-title">Application Settings <span id="app-version-tag">map v5.0</span></span>
           <button class="close-modal-btn" onclick="closeSettingsModal()">&times;</button>
         </div>
         <div id="settings-body">
@@ -1741,8 +1741,8 @@
     /* Small rail-track glyph used to visually distinguish rail hubs from FCs beyond color alone */
     const RAIL_ICON_SVG = `<svg class="rail-icon" viewBox="0 0 16 16" width="9" height="9"><line x1="2" y1="1" x2="2" y2="15" stroke="currentColor" stroke-width="1.6"/><line x1="14" y1="1" x2="14" y2="15" stroke="currentColor" stroke-width="1.6"/><line x1="2" y1="3.5" x2="14" y2="3.5" stroke="currentColor" stroke-width="1.6"/><line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.6"/><line x1="2" y1="12.5" x2="14" y2="12.5" stroke="currentColor" stroke-width="1.6"/></svg>`;
 
-    const fulfillmentCenters = [
-      // RAIL HUBS & TERMINALS
+    let sheetFacilities = [
+      // RAIL HUBS & TERMINALS (built-in fallback data — used if the Google Sheet can't be reached)
       { code: "RBET", city: "Beringen / Betzdorf Rail Hub", country: "Luxembourg / Germany", lat: 49.7708, lng: 6.1014, type: "rail" },
       { code: "RBAI", city: "Bad Bentheim Rail Terminal", country: "Germany", lat: 52.3031, lng: 7.1594, type: "rail" },
       { code: "RDUIS", city: "Duisburg Intermodal Rail Terminal", country: "Germany", lat: 51.4344, lng: 6.7628, type: "rail" },
@@ -1917,7 +1917,25 @@
     function codeComparator(a, b) {
       return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
     }
-    fulfillmentCenters.sort(codeComparator);
+
+    /* --- MERGED FACILITY LIST ---
+       fulfillmentCenters is the single array every other part of the app reads from.
+       It's rebuilt any time sheetFacilities (from Google Sheet) or customFacilities (from this
+       browser's localStorage) changes. Custom entries take priority over Sheet entries with the
+       same code, so a local add/override always wins visually until the Sheet itself is updated. */
+    let customFacilities = [];
+    const fulfillmentCenters = [];
+
+    function rebuildFulfillmentCenters() {
+      const customCodes = new Set(customFacilities.map(fc => fc.code.toUpperCase()));
+      fulfillmentCenters.length = 0;
+      sheetFacilities.forEach(fc => {
+        if (!customCodes.has(fc.code.toUpperCase())) fulfillmentCenters.push(fc);
+      });
+      customFacilities.forEach(fc => fulfillmentCenters.push(fc));
+      fulfillmentCenters.sort(codeComparator);
+    }
+    rebuildFulfillmentCenters();
 
     const presets = {
       default: {
@@ -2069,7 +2087,6 @@
       showCoverageOnHover: false
     }).addTo(map);
     let preShowAllItems = null;
-    let customFacilities = [];
 
     /* --- CLUSTER CLICK: SHOW A NAMED LIST INSTEAD OF AUTO-ZOOMING --- */
     showAllLayers.on('clusterclick', function(e) {
@@ -2195,6 +2212,106 @@
       }
     }
 
+    /* --- SHARED GOOGLE SHEET SYNC ---
+       On load, pull the team's facility list from a published Google Sheet CSV so everyone sees the
+       same base data. If the fetch fails (offline, sheet unpublished, etc.) we fall back to the last
+       successfully-fetched copy cached in localStorage, and if that's also unavailable, to the
+       built-in sheetFacilities array defined above — so the app always has something to show. */
+    const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTDBQLEPnZv15sMA_ZfU5xhmrz1gQmPHpXtD_8EImLWzTuIlo7O435OcZRMgYG3fBl2BYSKdDitQMxw/pub?gid=0&single=true&output=csv';
+    const SHEET_CACHE_KEY = 'amzFleetTracker.sheetFacilitiesCache.v1';
+
+    function parseCSV(text) {
+      const rows = [];
+      let row = [], field = '', inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (inQuotes) {
+          if (char === '"') {
+            if (text[i + 1] === '"') { field += '"'; i++; }
+            else { inQuotes = false; }
+          } else {
+            field += char;
+          }
+        } else if (char === '"') {
+          inQuotes = true;
+        } else if (char === ',') {
+          row.push(field); field = '';
+        } else if (char === '\r') {
+          // skip, handled by \n
+        } else if (char === '\n') {
+          row.push(field); rows.push(row); row = []; field = '';
+        } else {
+          field += char;
+        }
+      }
+      if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+      return rows.filter(r => r.some(cell => cell.trim() !== ''));
+    }
+
+    function facilitiesFromCSVRows(rows) {
+      if (rows.length < 2) return [];
+      const header = rows[0].map(h => h.trim().toLowerCase());
+      const idx = {
+        code: header.indexOf('code'),
+        city: header.indexOf('city'),
+        country: header.indexOf('country'),
+        type: header.indexOf('type'),
+        lat: header.indexOf('lat'),
+        lng: header.indexOf('lng')
+      };
+      if (idx.code === -1 || idx.city === -1 || idx.country === -1 || idx.lat === -1 || idx.lng === -1) {
+        throw new Error('Sheet is missing one of the required columns: code, city, country, lat, lng.');
+      }
+
+      const parsed = [];
+      for (let i = 1; i < rows.length; i++) {
+        const r = rows[i];
+        const code = (r[idx.code] || '').trim().toUpperCase();
+        const city = (r[idx.city] || '').trim();
+        const country = (r[idx.country] || '').trim();
+        const lat = parseFloat(r[idx.lat]);
+        const lng = parseFloat(r[idx.lng]);
+        const typeRaw = idx.type !== -1 ? (r[idx.type] || '').trim().toLowerCase() : '';
+        if (!code || !city || !country || isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+          continue; // silently skip malformed rows rather than breaking the whole load
+        }
+        const fc = { code, city, country, lat, lng };
+        if (typeRaw === 'rail') fc.type = 'rail';
+        parsed.push(fc);
+      }
+      return parsed;
+    }
+
+    async function loadFacilitiesFromSheet() {
+      try {
+        const res = await fetch(SHEET_CSV_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`Sheet fetch returned HTTP ${res.status}`);
+        const text = await res.text();
+        const parsed = facilitiesFromCSVRows(parseCSV(text));
+        if (parsed.length === 0) throw new Error('Sheet returned no valid facility rows.');
+
+        sheetFacilities = parsed;
+        try { localStorage.setItem(SHEET_CACHE_KEY, JSON.stringify(sheetFacilities)); } catch (e) { /* storage full/unavailable — non-fatal */ }
+        rebuildFulfillmentCenters();
+        refreshAfterFacilityChange();
+        console.info(`Loaded ${sheetFacilities.length} facilities from the shared Google Sheet.`);
+      } catch (err) {
+        console.warn('Could not load facilities from Google Sheet, trying cached copy:', err);
+        try {
+          const cached = localStorage.getItem(SHEET_CACHE_KEY);
+          const parsedCache = cached ? JSON.parse(cached) : null;
+          if (Array.isArray(parsedCache) && parsedCache.length > 0) {
+            sheetFacilities = parsedCache;
+            rebuildFulfillmentCenters();
+            refreshAfterFacilityChange();
+            console.info(`Using last cached Sheet data (${sheetFacilities.length} facilities, offline fallback).`);
+            return;
+          }
+        } catch (e) { /* ignore — falls through to built-in data */ }
+        console.warn('No cached Sheet data available — using the built-in facility list.');
+      }
+    }
+
     /* --- CUSTOM FACILITY MANAGEMENT --- */
     const CUSTOM_FACILITIES_KEY = 'amzFleetTracker.customFacilities.v1';
 
@@ -2205,8 +2322,7 @@
         const saved = JSON.parse(raw);
         if (Array.isArray(saved)) {
           customFacilities = saved;
-          customFacilities.forEach(fc => fulfillmentCenters.push(fc));
-          fulfillmentCenters.sort(codeComparator);
+          rebuildFulfillmentCenters();
         }
       } catch (err) {
         console.warn('Could not load custom facilities:', err);
@@ -2223,7 +2339,10 @@
 
     function validateFacilityInput(code, city, country, lat, lng) {
       if (!code) return 'Facility code is required.';
-      if (fulfillmentCenters.some(fc => fc.code.toUpperCase() === code.toUpperCase())) return `Code "${code}" already exists.`;
+      const codeUpper = code.toUpperCase();
+      const isDuplicate = fulfillmentCenters.some(fc => fc.code.toUpperCase() === codeUpper) ||
+                           customFacilities.some(fc => fc.code.toUpperCase() === codeUpper);
+      if (isDuplicate) return `Code "${code}" already exists.`;
       if (!city) return 'City is required (auto-detection may have failed — enter it manually).';
       if (!country) return 'Country is required (auto-detection may have failed — enter it manually).';
       if (isNaN(lat) || lat < -90 || lat > 90) return 'Latitude must be a number between -90 and 90.';
@@ -2365,10 +2484,9 @@
       const newFacility = { code, city, country, lat: coords.lat, lng: coords.lng };
       if (type === 'rail') newFacility.type = 'rail';
 
-      fulfillmentCenters.push(newFacility);
-      fulfillmentCenters.sort(codeComparator);
       customFacilities.push(newFacility);
       saveCustomFacilities();
+      rebuildFulfillmentCenters();
 
       ['new-fac-code', 'new-fac-coords', 'new-fac-city', 'new-fac-country'].forEach(id => {
         document.getElementById(id).value = '';
@@ -2380,10 +2498,9 @@
     }
 
     function removeCustomFacility(code) {
-      const idx = fulfillmentCenters.findIndex(fc => fc.code === code);
-      if (idx !== -1) fulfillmentCenters.splice(idx, 1);
       customFacilities = customFacilities.filter(fc => fc.code !== code);
       saveCustomFacilities();
+      rebuildFulfillmentCenters();
       refreshAfterFacilityChange();
     }
 
@@ -2445,12 +2562,11 @@
         const newFacility = { code, city, country, lat, lng };
         if (type) newFacility.type = type;
 
-        fulfillmentCenters.push(newFacility);
         customFacilities.push(newFacility);
         added++;
       });
 
-      fulfillmentCenters.sort(codeComparator);
+      rebuildFulfillmentCenters();
       saveCustomFacilities();
       document.getElementById('csv-import-textarea').value = '';
 
@@ -3352,6 +3468,7 @@
     (function initSettings() {
       loadCustomFacilities();
       renderCustomFacilitiesList();
+      loadFacilitiesFromSheet(); // async — merges in and refreshes the view once it resolves
 
       const hadSavedSettings = loadSettingsFromStorage();
       if (!hadSavedSettings && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
