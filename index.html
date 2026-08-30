@@ -1,0 +1,3363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Amazon Europe FC Fleet Tracker</title>
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Leaflet MarkerCluster CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  
+  <style>
+    :root {
+      /* Theme Dynamic Variables */
+      --bg-header: rgba(35, 47, 62, 0.95);
+      --text-header: #ffffff;
+      --accent-color: #ff9900;
+      --accent-hover: #e68a00;
+      --accent-text: #111111;
+      --sidebar-bg: #ffffff;
+      --sidebar-header-bg: #131921;
+      --sidebar-header-text: #ffffff;
+      --card-bg: #ffffff;
+      --card-text: #111111;
+      
+      /* Distinct FC & Rail Colors per Theme */
+      --fc-color: #0066cc;
+      --rail-color: #9c27b0;
+      --rail-bg-light: #f3e5f5;
+      --selected-color: #1b8a3d;
+      
+      /* Radius Circles */
+      --circle-stroke: #ff9900;
+      --circle-fill: #ff9900;
+      --circle-opacity: 0.15;
+
+      /* Autocomplete Dropdown Theme */
+      --dropdown-bg: #ffffff;
+      --dropdown-text: #111111;
+      --dropdown-hover-bg: #f0f4f8;
+      --dropdown-border: #cccccc;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #main-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* FLOATING TOP CONTROL PANEL */
+    #controls {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: var(--bg-header);
+      color: var(--text-header);
+      padding: 10px 16px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      z-index: 1500;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      max-width: 90%;
+      box-sizing: border-box;
+    }
+
+    #controls label {
+      font-weight: 600;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    #controls input[type="text"] {
+      padding: 8px 12px;
+      border: 1px solid #444;
+      border-radius: 6px;
+      font-size: 13px;
+      text-transform: uppercase;
+      width: 260px;
+      outline: none;
+      background: #ffffff;
+      color: #111;
+    }
+
+    #controls button {
+      padding: 8px 14px;
+      background-color: var(--accent-color);
+      border: none;
+      border-radius: 6px;
+      color: var(--accent-text);
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    #controls button:hover {
+      background-color: var(--accent-hover);
+    }
+
+    /* CUSTOM AUTOCOMPLETE DROPDOWN */
+    .autocomplete-suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--dropdown-bg);
+      border: 1px solid var(--dropdown-border);
+      border-radius: 6px;
+      max-height: 180px;
+      overflow-y: auto;
+      z-index: 9999;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      display: none;
+      margin-top: 4px;
+    }
+
+    .autocomplete-suggestion {
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--dropdown-text);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .autocomplete-suggestion:hover, .autocomplete-suggestion.active {
+      background-color: var(--dropdown-hover-bg);
+      font-weight: bold;
+    }
+
+    .autocomplete-suggestion .sub-info {
+      font-size: 10px;
+      opacity: 0.6;
+    }
+
+    /* TOP SELECTION BANNER */
+    #selection-banner {
+      display: none;
+      background: var(--sidebar-bg);
+      border: 2px solid var(--fc-color);
+      border-radius: 12px;
+      padding: 8px 16px;
+      position: absolute;
+      top: 90px;
+      left: 20px;
+      z-index: 2000;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      font-size: 13px;
+      color: var(--card-text);
+      align-items: center;
+      gap: 12px;
+      max-width: 320px;
+      text-align: left;
+    }
+
+    #selection-banner strong {
+      color: var(--fc-color);
+    }
+
+    #selection-banner.error {
+      border-color: #ea4335;
+    }
+
+    #selection-banner.error strong {
+      color: #ea4335;
+    }
+
+    #btn-calc-route.loading {
+      opacity: 0.75;
+      cursor: wait;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: var(--accent-text);
+      border-radius: 50%;
+      display: inline-block;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .clear-btn {
+      background-color: #eaeded;
+      border: 1px solid #ccc;
+      color: #333;
+      padding: 4px 8px;
+      font-size: 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .clear-btn:hover {
+      background-color: #ddd;
+    }
+
+    /* SIDEBAR (MADE SHORTER TO NOT OVERLAP ROUTE PLANNER) */
+    #sidebar {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      bottom: 300px;
+      width: 320px;
+      max-height: calc(100% - 320px);
+      background-color: var(--sidebar-bg);
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      z-index: 1000;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.08);
+      backdrop-filter: blur(8px);
+    }
+
+    #sidebar-header {
+      background-color: var(--sidebar-header-bg);
+      color: var(--sidebar-header-text);
+      padding: 12px 16px;
+      font-weight: bold;
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #fc-count-badge {
+      background-color: var(--accent-color);
+      color: var(--accent-text);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: help;
+    }
+
+    #search-container {
+      padding: 10px 12px;
+      background-color: rgba(0,0,0,0.03);
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    #filterInput {
+      width: 100%;
+      box-sizing: border-box;
+      text-transform: uppercase;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    #sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-sizing: border-box;
+      scrollbar-width: thin;
+      scrollbar-color: var(--fc-color) transparent;
+    }
+
+    /* THEMED SCROLLBARS (webkit) */
+    #sidebar-content::-webkit-scrollbar,
+    #settings-body::-webkit-scrollbar,
+    .settings-tab-content::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    #sidebar-content::-webkit-scrollbar-track,
+    #settings-body::-webkit-scrollbar-track,
+    .settings-tab-content::-webkit-scrollbar-track {
+      background: transparent;
+      margin: 4px 0;
+    }
+
+    #sidebar-content::-webkit-scrollbar-thumb,
+    #settings-body::-webkit-scrollbar-thumb,
+    .settings-tab-content::-webkit-scrollbar-thumb {
+      background-color: var(--fc-color);
+      border-radius: 8px;
+      border: 2px solid var(--sidebar-bg);
+      background-clip: padding-box;
+    }
+
+    #sidebar-content::-webkit-scrollbar-thumb:hover,
+    #settings-body::-webkit-scrollbar-thumb:hover,
+    .settings-tab-content::-webkit-scrollbar-thumb:hover {
+      background-color: var(--accent-color);
+    }
+
+    /* BOTTOM-RIGHT ROUTE PLANNER BOX */
+    #route-planner {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      width: 320px;
+      background-color: var(--sidebar-bg);
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.22);
+      z-index: 1500;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.1);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    #route-planner-header {
+      background-color: var(--sidebar-header-bg);
+      color: var(--sidebar-header-text);
+      padding: 10px 16px;
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    #route-planner-body {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .route-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+    }
+
+    .route-field label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--card-text);
+      opacity: 0.8;
+    }
+
+    .route-field input {
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 12px;
+      text-transform: uppercase;
+      background: var(--card-bg);
+      color: var(--card-text);
+      outline: none;
+    }
+
+    .route-fields-with-swap {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+    }
+
+    .route-fields-stack {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .route-side-buttons {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    #swap-route-btn,
+    #reset-route-btn {
+      width: 32px;
+      flex-shrink: 0;
+      border-radius: 8px;
+      border: 1px solid rgba(0,0,0,0.15);
+      background: var(--card-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease;
+      padding: 0;
+    }
+
+    #swap-route-btn {
+      color: var(--fc-color);
+    }
+
+    #swap-route-btn:hover {
+      background: var(--fc-color);
+      color: #ffffff;
+    }
+
+    #reset-route-btn {
+      color: #ea4335;
+    }
+
+    #reset-route-btn:hover {
+      background: #ea4335;
+      color: #ffffff;
+    }
+
+    #swap-route-btn svg,
+    #reset-route-btn svg {
+      width: 15px;
+      height: 15px;
+      fill: currentColor;
+      transition: transform 0.25s ease;
+    }
+
+    #swap-route-btn:hover svg {
+      transform: rotate(180deg);
+    }
+
+    #reset-route-btn:hover svg {
+      transform: scale(1.15);
+    }
+
+    .route-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .route-actions button {
+      flex: 1;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    #btn-calc-route {
+      background-color: var(--accent-color);
+      color: var(--accent-text);
+    }
+
+    #btn-calc-route:hover {
+      background-color: var(--accent-hover);
+    }
+
+    /* CARD STYLES */
+    .fc-card {
+      background: var(--card-bg);
+      border: 2px solid var(--fc-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+      display: block;
+      font-family: inherit;
+    }
+
+    .fc-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+    }
+
+    .fc-card.rail-card {
+      border-color: var(--rail-color) !important;
+    }
+
+    .fc-card.truck-origin {
+      border-color: #ea4335 !important;
+      background-color: rgba(234, 67, 53, 0.08);
+    }
+
+    .fc-card.selected-card {
+      border-color: var(--selected-color) !important;
+      box-shadow: 0 0 0 2px var(--selected-color);
+    }
+
+    .fc-card-header {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .fc-card-header .fc-dist,
+    .fc-card-header .rail-dist,
+    .fc-card-header .truck-badge {
+      margin-right: auto;
+    }
+
+    .fc-code {
+      font-weight: bold;
+      font-size: 13px;
+      color: var(--card-text);
+    }
+
+    .fc-dist {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--fc-color);
+      background: rgba(0, 102, 204, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .rail-dist {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--rail-color);
+      background: var(--rail-bg-light);
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .truck-badge {
+      font-size: 11px;
+      font-weight: bold;
+      color: #ffffff;
+      background: #ea4335;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .fc-details {
+      font-size: 12px;
+      color: var(--card-text);
+      opacity: 0.8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+
+    /* SQUARE COPY COORDINATES BUTTON */
+    .copy-coords-btn {
+      width: 24px;
+      height: 24px;
+      flex-shrink: 0;
+      background: transparent;
+      border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 0;
+      color: var(--card-text);
+      opacity: 0.7;
+    }
+
+    .copy-coords-btn:hover {
+      background: var(--dropdown-hover-bg);
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+      opacity: 1;
+    }
+
+    .copy-coords-btn svg {
+      width: 13px;
+      height: 13px;
+      fill: currentColor;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #777;
+      margin: 20px 0;
+      font-style: italic;
+      font-size: 12px;
+    }
+
+    /* THEMED MARKER CLUSTERS (Show All view) */
+    .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+      background-color: rgba(255, 153, 0, 0.25);
+    }
+    .marker-cluster-small div, .marker-cluster-medium div, .marker-cluster-large div {
+      background-color: var(--accent-color);
+      color: var(--accent-text);
+      font-weight: bold;
+    }
+
+    /* CLUSTER CLICK POPUP: NAMED FACILITY LIST */
+    .leaflet-popup-content-wrapper {
+      background: var(--card-bg);
+      color: var(--card-text);
+      border-radius: 10px;
+    }
+
+    .leaflet-popup-tip {
+      background: var(--card-bg);
+    }
+
+    .leaflet-popup-content-wrapper .leaflet-popup-content {
+      margin: 10px 12px;
+    }
+
+    .cluster-popup-list {
+      min-width: 170px;
+      max-width: 220px;
+    }
+
+    .cluster-popup-header {
+      font-weight: bold;
+      font-size: 12px;
+      margin-bottom: 6px;
+      color: var(--card-text);
+    }
+
+    .cluster-popup-zoom-link {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent-color);
+      cursor: pointer;
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .cluster-popup-zoom-link:hover {
+      text-decoration: underline;
+    }
+
+    .cluster-popup-items {
+      max-height: 220px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--fc-color) transparent;
+    }
+
+    .cluster-popup-items::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .cluster-popup-items::-webkit-scrollbar-thumb {
+      background-color: var(--fc-color);
+      border-radius: 6px;
+    }
+
+    .cluster-popup-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 6px;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 5px;
+      color: var(--card-text);
+      transition: background 0.15s ease;
+    }
+
+    .cluster-popup-item:hover {
+      background: rgba(0,0,0,0.06);
+    }
+
+    .cluster-popup-item strong {
+      color: var(--fc-color);
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .cluster-popup-item.rail strong {
+      color: var(--rail-color);
+    }
+
+    .cluster-popup-item span {
+      font-size: 11px;
+      opacity: 0.75;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    /* MAP LABELS */
+    .custom-map-label {
+      background-color: var(--sidebar-bg);
+      border: 2px solid var(--fc-color);
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: bold;
+      color: var(--card-text);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+      white-space: nowrap;
+      cursor: pointer;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transform: translate(-50%, -100%);
+      pointer-events: auto;
+      transition: all 0.1s ease;
+    }
+
+    .custom-map-label.rail-label {
+      border-color: var(--rail-color) !important;
+    }
+
+    .rail-icon {
+      color: var(--rail-color);
+      vertical-align: -1px;
+      margin-right: 3px;
+    }
+
+    /* GOOGLE MAPS STYLE RED LOCATION PIN FOR ORIGIN TRUCK LOCATIONS */
+    .custom-map-label.origin-label {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transform: translate(-50%, -100%);
+    }
+
+    .google-pin-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .google-pin-badge {
+      background-color: #ea4335;
+      color: #ffffff;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: bold;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+      margin-bottom: 2px;
+      white-space: nowrap;
+      border: 1px solid #ffffff;
+    }
+
+    .google-pin-svg {
+      width: 34px;
+      height: 46px;
+      filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.35));
+      transition: transform 0.2s ease;
+    }
+
+    .google-pin-container:hover .google-pin-svg {
+      transform: scale(1.15);
+    }
+
+    .custom-map-label.selected-point {
+      border-color: var(--selected-color) !important;
+      border-width: 3px !important;
+      background-color: var(--sidebar-bg) !important;
+      box-shadow: 0 0 0 2px var(--selected-color), 0 4px 8px rgba(0,0,0,0.35) !important;
+      transform: translate(-50%, -100%) scale(1.2) !important;
+      z-index: 9999 !important;
+    }
+
+    .custom-map-label .extra-info {
+      display: none;
+      font-size: 10px;
+      font-weight: normal;
+      color: var(--card-text);
+      margin-top: 2px;
+      border-top: 1px solid rgba(0,0,0,0.1);
+      padding-top: 2px;
+      text-align: center;
+    }
+
+    .custom-map-label:hover {
+      transform: translate(-50%, -100%) scale(1.15);
+      z-index: 9999 !important;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.35);
+    }
+
+    .custom-map-label:hover .extra-info {
+      display: block;
+    }
+
+    /* SETTINGS BUTTON */
+    #settings-btn {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      z-index: 2000;
+      background-color: var(--bg-header);
+      color: var(--text-header);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      backdrop-filter: blur(8px);
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    #settings-btn:hover {
+      transform: rotate(30deg) scale(1.05);
+    }
+
+    #settings-btn:active,
+    #show-all-btn:active {
+      transform: scale(0.92);
+    }
+
+    #settings-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: var(--text-header);
+    }
+
+    /* SHOW ALL FACILITIES (EYE) BUTTON */
+    #show-all-btn {
+      position: absolute;
+      bottom: 20px;
+      left: 76px;
+      z-index: 2000;
+      background-color: var(--bg-header);
+      color: var(--text-header);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      backdrop-filter: blur(8px);
+      transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    #show-all-btn:hover {
+      transform: scale(1.08);
+    }
+
+    #show-all-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: var(--text-header);
+      transition: fill 0.2s ease;
+    }
+
+    #show-all-btn.active {
+      background-color: var(--accent-color);
+      border-color: var(--accent-color);
+    }
+
+    #show-all-btn.active svg {
+      fill: var(--accent-text);
+    }
+
+    /* SETTINGS MODAL POPUP */
+    #settings-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      padding: 24px 16px;
+      overflow: hidden;
+    }
+
+    #settings-modal {
+      background: var(--sidebar-bg);
+      color: var(--card-text);
+      width: 460px;
+      max-width: 100%;
+      height: 620px;
+      max-height: 100%;
+      border-radius: 16px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+      border: 1px solid rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: popIn 0.2s ease-out;
+    }
+
+    @keyframes popIn {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    #settings-header {
+      background-color: var(--sidebar-header-bg);
+      color: var(--sidebar-header-text);
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: bold;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    #app-version-tag {
+      font-weight: normal;
+      font-size: 11px;
+      opacity: 0.5;
+      margin-left: 4px;
+    }
+
+    .close-modal-btn {
+      background: transparent;
+      border: none;
+      color: inherit;
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    #settings-body {
+      padding: 16px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      touch-action: pan-y;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+      scrollbar-width: thin;
+      scrollbar-color: var(--fc-color) transparent;
+      position: relative;
+    }
+
+    /* FULL-SCREEN TAB DETAIL VIEW (within settings modal) */
+    #settings-body.detail-mode .settings-tab:not(.open) {
+      display: none;
+    }
+
+    #settings-body.detail-mode .settings-tab.open {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--card-bg);
+      border: none;
+      border-radius: 0;
+      z-index: 5;
+      animation: slideInPanel 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideInPanel {
+      from { opacity: 0; transform: translateX(24px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes fadeInMenuTab {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    #settings-body:not(.detail-mode) .settings-tab {
+      animation: fadeInMenuTab 0.2s ease-out both;
+    }
+
+    #settings-body:not(.detail-mode) #tab-preferences { animation-delay: 0.02s; }
+    #settings-body:not(.detail-mode) #tab-theme { animation-delay: 0.06s; }
+    #settings-body:not(.detail-mode) #tab-menus { animation-delay: 0.1s; }
+    #settings-body:not(.detail-mode) #tab-facilities { animation-delay: 0.14s; }
+
+    #settings-body.detail-mode .settings-tab.open .settings-tab-header {
+      flex-shrink: 0;
+      border-radius: 0;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    #settings-body.detail-mode .settings-tab.open .settings-tab-content {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      border-top: none;
+      scrollbar-width: thin;
+      scrollbar-color: var(--fc-color) transparent;
+      animation: fadeInMenuTab 0.3s ease-out 0.08s both;
+    }
+
+    #settings-body.detail-mode .settings-tab.open .settings-tab-icon {
+      display: none;
+    }
+
+    .settings-tab-header .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .back-arrow-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      transition: background 0.2s;
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .back-arrow-btn:hover {
+      background: rgba(0,0,0,0.1);
+    }
+
+    #settings-body.detail-mode .settings-tab.open .back-arrow-btn {
+      display: flex;
+    }
+
+    /* EXPANDABLE SETTINGS TABS */
+    .settings-tab {
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--card-bg);
+    }
+
+    .settings-tab-header {
+      padding: 12px 16px;
+      background: rgba(0,0,0,0.04);
+      font-weight: bold;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+      transition: background 0.15s ease;
+    }
+
+    .settings-tab-header:hover {
+      background: rgba(0,0,0,0.07);
+    }
+
+    .settings-tab-content {
+      padding: 16px;
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      border-top: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .settings-tab.open .settings-tab-content {
+      display: flex;
+    }
+
+    .settings-tab-icon {
+      transition: transform 0.2s ease;
+    }
+
+    .settings-tab.open .settings-tab-icon {
+      transform: rotate(180deg);
+    }
+
+    .theme-presets {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .preset-btn {
+      padding: 8px 12px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      background: #f8f9fa;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      color: #333;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .preset-btn.active {
+      border-color: var(--accent-color);
+      background: var(--accent-color);
+      color: var(--accent-text);
+    }
+
+    .section-divider {
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.6;
+      margin-top: 8px;
+      margin-bottom: 2px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      padding-bottom: 4px;
+    }
+
+    .setting-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      padding-bottom: 6px;
+    }
+
+    .setting-group label {
+      font-weight: 500;
+      padding-right: 10px;
+    }
+
+    .setting-group input[type="color"] {
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      background: none;
+      flex-shrink: 0;
+    }
+
+    .setting-group input[type="range"] {
+      width: 120px;
+      flex-shrink: 0;
+    }
+
+    .setting-group input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .setting-group input[type="number"], .setting-group select {
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 12px;
+      background: var(--card-bg);
+      color: var(--card-text);
+      outline: none;
+    }
+
+    /* Remove number input spin arrows (radius distance field) */
+    .setting-group input[type="number"] {
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+
+    .setting-group input[type="number"]::-webkit-outer-spin-button,
+    .setting-group input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* ===================== MANAGE FACILITIES PANEL ===================== */
+    .facility-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .facility-form-grid .full-width {
+      grid-column: 1 / -1;
+    }
+
+    .facility-form-grid label {
+      font-size: 11px;
+      font-weight: 600;
+      opacity: 0.8;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .facility-form-grid input,
+    .facility-form-grid select {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 7px 9px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 12px;
+      background: var(--card-bg);
+      color: var(--card-text);
+      outline: none;
+    }
+
+    .form-submit-btn {
+      background: var(--accent-color);
+      color: var(--accent-text);
+      border: none;
+      padding: 9px 16px;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+      align-self: flex-start;
+    }
+
+    .form-submit-btn:hover {
+      background: var(--accent-hover);
+    }
+
+    .form-inline-message {
+      font-size: 11px;
+      display: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      line-height: 1.4;
+    }
+
+    .form-inline-message.error {
+      display: block;
+      background: rgba(234, 67, 53, 0.1);
+      color: #ea4335;
+    }
+
+    .form-inline-message.success {
+      display: block;
+      background: rgba(27, 138, 61, 0.1);
+      color: #1b8a3d;
+    }
+
+    .coords-detect-status {
+      font-size: 10.5px;
+      opacity: 0.75;
+      margin-top: 4px;
+      min-height: 13px;
+    }
+
+    .coords-detect-status.error-text {
+      color: #ea4335;
+      opacity: 1;
+    }
+
+    #csv-import-textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 11px;
+      font-family: 'SFMono-Regular', Consolas, monospace;
+      background: var(--card-bg);
+      color: var(--card-text);
+      resize: vertical;
+      outline: none;
+    }
+
+    .csv-format-hint {
+      font-size: 10.5px;
+      opacity: 0.7;
+      line-height: 1.5;
+    }
+
+    .csv-format-hint code {
+      background: rgba(0,0,0,0.06);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    .custom-facility-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      background: rgba(0,0,0,0.03);
+      border-radius: 6px;
+      padding: 7px 10px;
+      font-size: 12px;
+    }
+
+    .custom-facility-row .cf-info {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .custom-facility-row .cf-remove-btn {
+      background: transparent;
+      border: none;
+      color: #ea4335;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      padding: 2px 6px;
+      flex-shrink: 0;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+
+    .custom-facility-row .cf-remove-btn:hover {
+      background: rgba(234, 67, 53, 0.12);
+    }
+
+    /* ===================== MOBILE / NARROW VIEWPORT LAYOUT ===================== */
+    @media (max-width: 768px) {
+      #controls {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+        max-width: calc(100% - 24px);
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      #controls input[type="text"] {
+        width: 100%;
+      }
+
+      #controls button {
+        width: 100%;
+      }
+
+      #selection-banner {
+        left: 12px;
+        right: 12px;
+        max-width: none;
+        top: auto;
+        bottom: 210px;
+      }
+
+      #sidebar {
+        top: auto;
+        bottom: 190px;
+        left: 12px;
+        right: 12px;
+        width: auto;
+        max-height: 32vh;
+      }
+
+      #route-planner {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        width: auto;
+      }
+
+      #route-planner-body {
+        padding: 10px;
+      }
+
+      #settings-btn,
+      #show-all-btn {
+        width: 40px;
+        height: 40px;
+        bottom: 12px;
+      }
+
+      #settings-btn {
+        left: 12px;
+      }
+
+      #show-all-btn {
+        left: 64px;
+      }
+
+      #settings-modal-overlay {
+        padding: 0;
+      }
+
+      #settings-modal {
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="main-container">
+
+    <!-- FLOATING SEARCH CONTROL PANEL -->
+    <div id="controls">
+      <label for="fcInput">Search FC / Rail:</label>
+      <div class="input-wrapper">
+        <input type="text" id="fcInput" placeholder="e.g. ZAZ1, RDUIS, DIF6" autocomplete="off">
+        <div id="dropdown-fcInput" class="autocomplete-suggestions"></div>
+      </div>
+      <button onclick="drawRadiusMap()">Update Map</button>
+    </div>
+
+    <div id="selection-banner">
+      <span id="banner-text">Select a facility to highlight</span>
+      <button class="clear-btn" onclick="resetSelections()">Reset Selection</button>
+    </div>
+
+    <div id="map"></div>
+    
+    <div id="sidebar">
+      <div id="sidebar-header">
+        <span>Facilities Nearby</span>
+        <span id="fc-count-badge">0</span>
+      </div>
+      
+      <div id="search-container">
+        <input type="text" id="filterInput" onkeyup="filterFacilities()" placeholder="Search nearby list...">
+      </div>
+
+      <div id="sidebar-content">
+        <div class="empty-state">Enter a location above to see all facilities inside its 150 km radius.</div>
+      </div>
+    </div>
+
+    <!-- BOTTOM-RIGHT ROUTE PLANNER BOX -->
+    <div id="route-planner">
+      <div id="route-planner-header">
+        <span>Route Calculator</span>
+      </div>
+      <div id="route-planner-body">
+        <div class="route-fields-with-swap">
+          <div class="route-fields-stack">
+            <div class="route-field">
+              <label>Origin (facility code or coordinates):</label>
+              <div class="input-wrapper">
+                <input type="text" id="route-from" placeholder="e.g. DTM3 or 48.7758, 9.1829" autocomplete="off">
+                <div id="dropdown-route-from" class="autocomplete-suggestions"></div>
+              </div>
+            </div>
+
+            <div class="route-field">
+              <label>Destination (facility code or coordinates):</label>
+              <div class="input-wrapper">
+                <input type="text" id="route-to" placeholder="e.g. STR2 or 48.90, 8.70" autocomplete="off">
+                <div id="dropdown-route-to" class="autocomplete-suggestions"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="route-side-buttons">
+            <button id="swap-route-btn" onclick="swapRoutePoints()" title="Swap origin and destination">
+              <svg viewBox="0 0 24 24"><path d="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3L5 6.99h3V14h2V6.99h3L9 3z"/></svg>
+            </button>
+            <button id="reset-route-btn" onclick="resetSelections()" title="Clear route">
+              <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.59 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="route-actions">
+          <button id="btn-calc-route" onclick="triggerBoxRoute()">Calculate</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS FLOATING BUTTON -->
+    <button id="settings-btn" onclick="openSettingsModal()" title="Settings">
+      <svg viewBox="0 0 24 24">
+        <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81C14.36,2.58,14.16,2.4,13.92,2.4 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+      </svg>
+    </button>
+
+    <!-- SHOW ALL FACILITIES (EYE) BUTTON -->
+    <button id="show-all-btn" onclick="toggleShowAllFacilities()" title="Show All Facilities">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 5c-5.05 0-9.27 3.11-11 7.5 1.73 4.39 5.95 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-5.95-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+      </svg>
+    </button>
+
+    <!-- SETTINGS MODAL OVERLAY -->
+    <div id="settings-modal-overlay">
+      <div id="settings-modal">
+        <div id="settings-header">
+          <span class="settings-header-title">Application Settings <span id="app-version-tag">map v4.9</span></span>
+          <button class="close-modal-btn" onclick="closeSettingsModal()">&times;</button>
+        </div>
+        <div id="settings-body">
+
+          <!-- TAB 1: PREFERENCES -->
+          <div class="settings-tab" id="tab-preferences">
+            <div class="settings-tab-header" onclick="toggleSettingsTab('tab-preferences')">
+              <span class="header-left"><span class="back-arrow-btn" title="Back to settings">&#8592;</span><span>Preferences</span></span>
+              <span class="settings-tab-icon">&#9660;</span>
+            </div>
+            <div class="settings-tab-content">
+              <div class="setting-group">
+                <label for="cfg-radius-distance">Radius Distance (km):</label>
+                <input type="number" id="cfg-radius-distance" min="10" max="1000" step="10" value="150" onchange="updateUserPreferences()">
+              </div>
+              <div class="setting-group">
+                <label for="toggle-railway-hubs">Show Railway Systems/Hubs</label>
+                <input type="checkbox" id="toggle-railway-hubs" checked onchange="updateUserPreferences()">
+              </div>
+              <div class="setting-group">
+                <label for="cfg-currency-type">Preferred Currency:</label>
+                <select id="cfg-currency-type" onchange="updateUserPreferences()">
+                  <option value="EUR">Euro (€)</option>
+                  <option value="GBP">Pound (£)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <!-- TAB 2: THEME SETTINGS -->
+          <div class="settings-tab" id="tab-theme">
+            <div class="settings-tab-header" onclick="toggleSettingsTab('tab-theme')">
+              <span class="header-left"><span class="back-arrow-btn" title="Back to settings">&#8592;</span><span>Theme Settings</span></span>
+              <span class="settings-tab-icon">&#9660;</span>
+            </div>
+            <div class="settings-tab-content">
+              <label style="font-weight: bold; font-size: 13px;">Theme Presets:</label>
+              <div class="theme-presets">
+                <button class="preset-btn active" id="btn-preset-default" onclick="applyPreset('default')">Amazon Dark</button>
+                <button class="preset-btn" id="btn-preset-light" onclick="applyPreset('light')">Clean Light</button>
+                <button class="preset-btn" id="btn-preset-rose" onclick="applyPreset('rose')">Rose / Pink</button>
+                <button class="preset-btn" id="btn-preset-vscode" onclick="applyPreset('vscode')">VS Code</button>
+                <button class="preset-btn" id="btn-preset-ocean" onclick="applyPreset('ocean')">Ocean Drive</button>
+                <button class="preset-btn" id="btn-preset-custom" onclick="applyPreset('custom')">Custom Theme</button>
+              </div>
+
+              <!-- TOP BAR SECTION -->
+              <div class="section-divider">Top Control Panel</div>
+              <div class="setting-group">
+                <label>Top Panel Bar Background:</label>
+                <input type="color" id="cfg-bg-header" onchange="updateCustomColor('--bg-header', this.value)">
+              </div>
+              <div class="setting-group">
+                <label>Top Panel Bar Label Text:</label>
+                <input type="color" id="cfg-text-header" onchange="updateCustomColor('--text-header', this.value)">
+              </div>
+              <div class="setting-group">
+                <label>Origin & Accent Color:</label>
+                <input type="color" id="cfg-accent" onchange="updateCustomColor('--accent-color', this.value)">
+              </div>
+              <div class="setting-group">
+                <label>Accent Text Color:</label>
+                <input type="color" id="cfg-accent-text" onchange="updateCustomColor('--accent-text', this.value)">
+              </div>
+
+              <!-- AUTOCOMPLETE DROPDOWN SECTION -->
+              <div class="section-divider">Autocomplete Dropdown Menu</div>
+              <div class="setting-group">
+                <label>Menu Background:</label>
+                <input type="color" id="cfg-dropdown-bg" onchange="updateCustomColor('--dropdown-bg', this.value)">
+              </div>
+              <div class="setting-group">
+                <label>Menu Text Color:</label>
+                <input type="color" id="cfg-dropdown-text" onchange="updateCustomColor('--dropdown-text', this.value)">
+              </div>
+              <div class="setting-group">
+                <label>Item Hover Background:</label>
+                <input type="color" id="cfg-dropdown-hover-bg" onchange="updateCustomColor('--dropdown-hover-bg', this.value)">
+              </div>
+
+              <!-- RADIUS CIRCLE SECTION -->
+              <div class="section-divider">Radius Circles (Map)</div>
+              <div class="setting-group">
+                <label>Circle Outer Border Line:</label>
+                <input type="color" id="cfg-circle-stroke" onchange="updateCircleStyle('stroke', this.value)">
+              </div>
+              <div class="setting-group">
+                <label>Circle Inside Fill Color:</label>
+                <input type="color" id="cfg-circle-fill" onchange="updateCircleStyle('fill', this.value)">
+              </div>
+              <div class="setting-group">
+                <label>Circle Fill Opacity:</label>
+                <input type="range" id="cfg-circle-opacity" min="0" max="1" step="0.05" oninput="updateCircleStyle('opacity', this.value)">
+              </div>
+
+              <!-- SIDEBAR & LIST SECTION -->
+              <div class="section-divider">Facility & Rail Marker Colors</div>
+              <div class="setting-group">
+                <label>Standard FC Accent Color:</label>
+                <input type="color" id="cfg-fc-color" onchange="updateCustomColor('--fc-color', this.value)">
+              </div>
+              <div class="setting-group">
+                <label>Rail Hub Accent Color:</label>
+                <input type="color" id="cfg-rail-color" onchange="updateCustomColor('--rail-color', this.value)">
+              </div>
+              <div class="setting-group">
+                <label>Active Route Selection Color:</label>
+                <input type="color" id="cfg-selected-color" onchange="updateCustomColor('--selected-color', this.value)">
+              </div>
+              <div class="setting-group">
+                <label>Sidebar Background:</label>
+                <input type="color" id="cfg-sidebar-bg" onchange="updateCustomColor('--sidebar-bg', this.value)">
+              </div>
+              <div class="setting-group">
+                <label>Sidebar Header Background:</label>
+                <input type="color" id="cfg-sidebar-header-bg" onchange="updateCustomColor('--sidebar-header-bg', this.value)">
+              </div>
+              <div class="setting-group">
+                <label>Card Text Color:</label>
+                <input type="color" id="cfg-card-text" onchange="updateCustomColor('--card-text', this.value)">
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: MENUS & UI LAYERS TOGGLES -->
+          <div class="settings-tab" id="tab-menus">
+            <div class="settings-tab-header" onclick="toggleSettingsTab('tab-menus')">
+              <span class="header-left"><span class="back-arrow-btn" title="Back to settings">&#8592;</span><span>Menus & UI Layers</span></span>
+              <span class="settings-tab-icon">&#9660;</span>
+            </div>
+            <div class="settings-tab-content">
+              <div class="setting-group">
+                <label for="toggle-top-controls">Top Search Control Panel</label>
+                <input type="checkbox" id="toggle-top-controls" checked onchange="toggleUIMenu('controls', this.checked)">
+              </div>
+              <div class="setting-group">
+                <label for="toggle-selection-banner">Selection / Info Banner</label>
+                <input type="checkbox" id="toggle-selection-banner" checked onchange="toggleUIMenu('selection-banner', this.checked)">
+              </div>
+              <div class="setting-group">
+                <label for="toggle-sidebar">Facilities Nearby List (Sidebar)</label>
+                <input type="checkbox" id="toggle-sidebar" checked onchange="toggleUIMenu('sidebar', this.checked)">
+              </div>
+              <div class="setting-group">
+                <label for="toggle-route-planner">Route Calculator Box</label>
+                <input type="checkbox" id="toggle-route-planner" checked onchange="toggleUIMenu('route-planner', this.checked)">
+              </div>
+              <div class="setting-group">
+                <label for="toggle-radius-circles">Radius Circles on Map</label>
+                <input type="checkbox" id="toggle-radius-circles" checked onchange="toggleMapCircles(this.checked)">
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: MANAGE FACILITIES -->
+          <div class="settings-tab" id="tab-facilities">
+            <div class="settings-tab-header" onclick="toggleSettingsTab('tab-facilities')">
+              <span class="header-left"><span class="back-arrow-btn" title="Back to settings">&#8592;</span><span>Manage Facilities</span></span>
+              <span class="settings-tab-icon">&#9660;</span>
+            </div>
+            <div class="settings-tab-content">
+
+              <label style="font-weight: bold; font-size: 13px;">Add a Facility</label>
+              <div class="facility-form-grid">
+                <div>
+                  <label for="new-fac-code">Code</label>
+                  <input type="text" id="new-fac-code" placeholder="e.g. STR9" style="text-transform: uppercase;">
+                </div>
+                <div>
+                  <label for="new-fac-type">Type</label>
+                  <select id="new-fac-type">
+                    <option value="fc">Fulfillment Center</option>
+                    <option value="rail">Rail Hub</option>
+                  </select>
+                </div>
+                <div class="full-width">
+                  <label for="new-fac-coords">Coordinates (paste from Google Maps)</label>
+                  <input type="text" id="new-fac-coords" placeholder="e.g. 48.7758, 9.1829" inputmode="decimal" onblur="handleCoordsBlur()">
+                  <div id="coords-detect-status" class="coords-detect-status"></div>
+                </div>
+                <div>
+                  <label for="new-fac-city">City <span style="font-weight: normal; opacity: 0.6;">(auto-detected)</span></label>
+                  <input type="text" id="new-fac-city" placeholder="Detected automatically">
+                </div>
+                <div>
+                  <label for="new-fac-country">Country <span style="font-weight: normal; opacity: 0.6;">(auto-detected)</span></label>
+                  <input type="text" id="new-fac-country" placeholder="Detected automatically">
+                </div>
+                <div class="full-width form-inline-message" id="add-facility-error"></div>
+              </div>
+              <button class="form-submit-btn" id="add-facility-btn" onclick="addFacilityFromForm()">Add Facility</button>
+
+              <div class="section-divider">Bulk Import (CSV)</div>
+              <div class="csv-format-hint">
+                One facility per line: <code>code,city,country,lat,lng,type</code><br>
+                Type is optional — leave blank or write <code>fc</code> for a facility, <code>rail</code> for a rail hub.
+              </div>
+              <textarea id="csv-import-textarea" rows="4" placeholder="STR9,Stuttgart,Germany,48.7758,9.1829,fc&#10;RSTR,Stuttgart Rail Hub,Germany,48.78,9.18,rail"></textarea>
+              <button class="form-submit-btn" onclick="importFacilitiesFromCSV()">Import CSV</button>
+              <div id="csv-import-result" class="form-inline-message"></div>
+
+              <div class="section-divider">Custom Facilities Added (<span id="custom-facility-count">0</span>)</div>
+              <div id="custom-facilities-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <script>
+    /* Small rail-track glyph used to visually distinguish rail hubs from FCs beyond color alone */
+    const RAIL_ICON_SVG = `<svg class="rail-icon" viewBox="0 0 16 16" width="9" height="9"><line x1="2" y1="1" x2="2" y2="15" stroke="currentColor" stroke-width="1.6"/><line x1="14" y1="1" x2="14" y2="15" stroke="currentColor" stroke-width="1.6"/><line x1="2" y1="3.5" x2="14" y2="3.5" stroke="currentColor" stroke-width="1.6"/><line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.6"/><line x1="2" y1="12.5" x2="14" y2="12.5" stroke="currentColor" stroke-width="1.6"/></svg>`;
+
+    const fulfillmentCenters = [
+      // RAIL HUBS & TERMINALS
+      { code: "RBET", city: "Beringen / Betzdorf Rail Hub", country: "Luxembourg / Germany", lat: 49.7708, lng: 6.1014, type: "rail" },
+      { code: "RBAI", city: "Bad Bentheim Rail Terminal", country: "Germany", lat: 52.3031, lng: 7.1594, type: "rail" },
+      { code: "RDUIS", city: "Duisburg Intermodal Rail Terminal", country: "Germany", lat: 51.4344, lng: 6.7628, type: "rail" },
+      { code: "RLEJ", city: "Leipzig Rail Freight Hub", country: "Germany", lat: 51.4089, lng: 12.3164, type: "rail" },
+      { code: "RHAN", city: "Hannover Intermodal Rail Hub", country: "Germany", lat: 52.3759, lng: 9.7320, type: "rail" },
+      { code: "RHOF", city: "Hof / Gattendorf Rail Terminal", country: "Germany", lat: 50.3167, lng: 11.9167, type: "rail" },
+      { code: "RMAN", city: "Mannheim Freight Rail Station", country: "Germany", lat: 49.4875, lng: 8.4660, type: "rail" },
+      { code: "RLBO", city: "Luboń / Poznań Rail Hub", country: "Poland", lat: 52.3411, lng: 16.8872, type: "rail" },
+      { code: "RSWR", city: "Swarzędz Intermodal Terminal", country: "Poland", lat: 52.4136, lng: 17.0792, type: "rail" },
+      { code: "RWRO", city: "Wrocław Freight Rail Station", country: "Poland", lat: 51.1079, lng: 17.0385, type: "rail" },
+      { code: "RKTW", city: "Katowice / Gliwice Rail Hub", country: "Poland", lat: 50.2944, lng: 18.6714, type: "rail" },
+      { code: "RPRG", city: "Prague / Dobrovíz Rail Terminal", country: "Czech Republic", lat: 50.1167, lng: 14.2167, type: "rail" },
+      { code: "RDOU", city: "Douai / Lauwin-Planque Rail Node", country: "France", lat: 50.3803, lng: 3.0739, type: "rail" },
+      { code: "RLIL", city: "Lille Intermodal Rail Terminal", country: "France", lat: 50.6292, lng: 3.0573, type: "rail" },
+      { code: "RMET", city: "Metz / Ennery Freight Rail Hub", country: "France", lat: 49.2061, lng: 6.2169, type: "rail" },
+      { code: "RVEN", city: "Venlo Rail Freight Terminal", country: "Netherlands", lat: 51.3700, lng: 6.1725, type: "rail" },
+      { code: "RNOV", city: "Novara CIM Intermodal Rail Terminal", country: "Italy", lat: 45.4469, lng: 8.6211, type: "rail" },
+      { code: "RVER", city: "Verona Quadrante Europa Terminal", country: "Italy", lat: 45.4384, lng: 10.9916, type: "rail" },
+      { code: "RBCN", city: "Barcelona Rail Freight Hub", country: "Spain", lat: 41.3500, lng: 2.1333, type: "rail" },
+      { code: "RMAD", city: "Madrid Intermodal Rail Station", country: "Spain", lat: 40.4000, lng: -3.6833, type: "rail" },
+
+      // GERMANY FCs
+      { code: "DNX5", city: "Paderborn", country: "Germany", lat: 51.7189, lng: 8.7575 },
+      { code: "HAJ1", city: "Hannover", country: "Germany", lat: 52.3759, lng: 9.7320 },
+      { code: "HAJ8", city: "Hannover", country: "Germany", lat: 52.4172, lng: 9.5981 },
+      { code: "DFV1", city: "Frankfurt", country: "Germany", lat: 50.1109, lng: 8.6821 },
+      { code: "HVX6", city: "Frankfurt", country: "Germany", lat: 50.0400, lng: 8.5650 },
+      { code: "FRA1", city: "Bad Hersfeld", country: "Germany", lat: 50.8680, lng: 9.7120 },
+      { code: "FRA3", city: "Bad Hersfeld", country: "Germany", lat: 50.8690, lng: 9.7130 },
+      { code: "FRA7", city: "Frankfurt", country: "Germany", lat: 50.0379, lng: 8.5622 },
+      { code: "FRAX", city: "Frankfurt", country: "Germany", lat: 50.0400, lng: 8.5650 },
+      { code: "DHE4", city: "Friedrichsdorf", country: "Germany", lat: 50.2562, lng: 8.6432 },
+      { code: "DHE6", city: "Weiterstadt", country: "Germany", lat: 49.9012, lng: 8.5901 },
+      { code: "MHG9", city: "Frankfurt", country: "Germany", lat: 49.4875, lng: 8.4660 },
+      { code: "DOQ8", city: "Dortmund", country: "Germany", lat: 51.5136, lng: 7.4653 },
+      { code: "DTM1", city: "Dortmund", country: "Germany", lat: 51.5140, lng: 7.4660 },
+      { code: "DTM2", city: "Dortmund", country: "Germany", lat: 51.5150, lng: 7.4670 },
+      { code: "DTM3", city: "Dortmund", country: "Germany", lat: 51.5160, lng: 7.4680 },
+      { code: "DTM8", city: "Dortmund", country: "Germany", lat: 51.3389, lng: 6.5853 },
+      { code: "DTM9", city: "Dortmund", country: "Germany", lat: 51.5170, lng: 7.4690 },
+      { code: "DAO2", city: "Aachen", country: "Germany", lat: 50.7753, lng: 6.0839 },
+      { code: "DRQ1", city: "Rostock", country: "Germany", lat: 54.0924, lng: 12.0991 },
+      { code: "DNC2", city: "Nürnberg", country: "Germany", lat: 49.4521, lng: 11.0767 },
+      { code: "DNC1", city: "Nürnberg", country: "Germany", lat: 49.4530, lng: 11.0780 },
+      { code: "DNC3", city: "Nürnberg", country: "Germany", lat: 49.4540, lng: 11.0790 },
+      { code: "NUE1", city: "Nürnberg", country: "Germany", lat: 49.5333, lng: 8.3500 },
+      { code: "NUE9", city: "Nürnberg", country: "Germany", lat: 49.4521, lng: 11.0767 },
+      { code: "HBE1", city: "Nürnberg", country: "Germany", lat: 49.4550, lng: 11.0800 },
+      { code: "CDE9", city: "Nürnberg", country: "Germany", lat: 49.4550, lng: 11.0800 },
+      { code: "DBX8", city: "Bremen", country: "Germany", lat: 53.0793, lng: 8.8017 },
+      { code: "BRE2", city: "Bremen", country: "Germany", lat: 53.0131, lng: 9.0336 },
+      { code: "BRE4", city: "Bremen", country: "Germany", lat: 53.0150, lng: 9.0350 },
+      { code: "DNM4", city: "Bremen", country: "Germany", lat: 53.0800, lng: 8.8030 },
+      { code: "DNM7", city: "Bremen", country: "Germany", lat: 53.0810, lng: 8.8040 },
+      { code: "DBY2", city: "München", country: "Germany", lat: 48.1351, lng: 11.5820 },
+      { code: "MUC3", city: "München", country: "Germany", lat: 48.1883, lng: 10.8447 },
+      { code: "MUC7", city: "München", country: "Germany", lat: 48.1900, lng: 10.8460 },
+      { code: "DRP6", city: "Potsdam", country: "Germany", lat: 52.3988, lng: 13.0657 },
+      { code: "DRP2", city: "Potsdam", country: "Germany", lat: 52.4000, lng: 13.0670 },
+      { code: "XDR1", city: "Dresden", country: "Germany", lat: 51.0504, lng: 13.7373 },
+      { code: "XDEQ", city: "Dresden", country: "Germany", lat: 51.0520, lng: 13.7390 },
+      { code: "DBW5", city: "Berlin", country: "Germany", lat: 52.5200, lng: 13.4050 },
+      { code: "DBW1", city: "Berlin", country: "Germany", lat: 52.5210, lng: 13.4060 },
+      { code: "DBW6", city: "Berlin", country: "Germany", lat: 52.5220, lng: 13.4070 },
+      { code: "DBW8", city: "Berlin", country: "Germany", lat: 52.5230, lng: 13.4080 },
+      { code: "BER8", city: "Berlin", country: "Germany", lat: 52.3833, lng: 13.5167 },
+      { code: "DSY1", city: "Schkeuditz", country: "Germany", lat: 51.4150, lng: 12.3240 },
+      { code: "LEJ1", city: "Leipzig", country: "Germany", lat: 51.4089, lng: 12.3164 },
+      { code: "LEJ3", city: "Leipzig", country: "Germany", lat: 51.4233, lng: 12.2361 },
+      { code: "LEJ5", city: "Leipzig", country: "Germany", lat: 51.4110, lng: 12.3200 },
+      { code: "SDEV", city: "Kassel", country: "Germany", lat: 51.3150, lng: 9.4820 },
+      { code: "KSF7", city: "Kassel", country: "Germany", lat: 51.3128, lng: 9.4797 },
+      { code: "DMV3", city: "Magdeburg", country: "Germany", lat: 52.1205, lng: 11.6276 },
+      { code: "DAC9", city: "Aachen", country: "Germany", lat: 50.7760, lng: 6.0850 },
+      { code: "DAC2", city: "Aachen", country: "Germany", lat: 50.7770, lng: 6.0860 },
+      { code: "CFR9", city: "Erfurt", country: "Germany", lat: 50.9848, lng: 11.0299 },
+      { code: "ERF1", city: "Erfurt", country: "Germany", lat: 50.9850, lng: 11.0310 },
+      { code: "HBW2", city: "Bremen", country: "Germany", lat: 53.0820, lng: 8.8050 },
+      { code: "DSG1", city: "Stuttgart", country: "Germany", lat: 48.7758, lng: 9.1829 },
+      { code: "STR1", city: "Pforzheim", country: "Germany", lat: 48.8911, lng: 8.7025 },
+      { code: "STR2", city: "Pforzheim", country: "Germany", lat: 48.8920, lng: 8.7040 },
+      { code: "DIF4", city: "Frankfurt", country: "Germany", lat: 50.1120, lng: 8.6840 },
+      { code: "DND1", city: "Dortmund", country: "Germany", lat: 51.5180, lng: 7.4700 },
+      { code: "DBV1", city: "Berlin", country: "Germany", lat: 52.5240, lng: 13.4090 },
+      { code: "DTH1", city: "Thüringen", country: "Germany", lat: 50.9800, lng: 11.0200 },
+      { code: "PAD2", city: "Paderborn", country: "Germany", lat: 51.7200, lng: 8.7590 },
+      { code: "PAD1", city: "Paderborn", country: "Germany", lat: 51.7210, lng: 8.7600 },
+      { code: "DSH4", city: "Schwerin", country: "Germany", lat: 53.6355, lng: 11.4012 },
+      { code: "DVN1", city: "Hannover", country: "Germany", lat: 52.3770, lng: 9.7340 },
+      { code: "HAM2", city: "Hamburg", country: "Germany", lat: 53.3606, lng: 10.2222 },
+      { code: "DUS4", city: "Düsseldorf", country: "Germany", lat: 51.2277, lng: 6.7735 },
+      { code: "DUS2", city: "Düsseldorf", country: "Germany", lat: 51.2280, lng: 6.7750 },
+      { code: "CGN1", city: "Köln", country: "Germany", lat: 50.9375, lng: 6.9603 },
+      { code: "SCN2", city: "Saarbrücken", country: "Germany", lat: 49.2401, lng: 6.9969 },
+
+      // SPAIN FCs
+      { code: "MAD7", city: "Murcia", country: "Spain", lat: 40.10903673986542, lng:-3.8548238301276228 },
+      { code: "RMU1", city: "Murcia", country: "Spain", lat: 37.9922, lng: -1.1307 },
+      { code: "OVD1", city: "Oviedo", country: "Spain", lat: 43.3614, lng: -5.8593 },
+      { code: "ZAZ1", city: "Zaragoza", country: "Spain", lat: 41.6488, lng: -0.8891 },
+      { code: "SVQ1", city: "Sevilla", country: "Spain", lat: 37.2833, lng: -5.9167 },
+      { code: "MAD4", city: "San Fernando de Henares", country: "Spain", lat: 40.4667, lng: -3.5333 },
+      { code: "MAD5", city: "Vicálvaro", country: "Spain", lat: 40.3953, lng: -3.6067 },
+      { code: "MAD6", city: "Illescas", country: "Spain", lat: 40.1283, lng: -3.8472 },
+      { code: "MAD8", city: "Madrid", country: "Spain", lat: 40.4720, lng: -3.5390 },
+      { code: "MAD9", city: "Alcalá de Henares", country: "Spain", lat: 40.4819, lng: -3.3635 },
+      { code: "XESA", city: "Alovera", country: "Spain", lat: 40.5962, lng: -3.2483 },
+      { code: "XESB", city: "Alovera", country: "Spain", lat: 40.5975, lng: -3.2490 },
+      { code: "BCN1", city: "Barcelona", country: "Spain", lat: 41.3167, lng: 2.1000 },
+      { code: "BCN3", city: "Barcelona", country: "Spain", lat: 41.3175, lng: 2.1010 },
+      { code: "BCN6", city: "Barcelona", country: "Spain", lat: 41.3190, lng: 2.1030 },
+      { code: "BCN8", city: "Barcelona", country: "Spain", lat: 41.3200, lng: 2.1040 },
+
+      // FRANCE FCs
+      { code: "DIF6", city: "Noisy-le-Grand", country: "France", lat: 48.8478, lng: 2.5528 },
+      { code: "DAO3", city: "Aachen / Region", country: "France", lat: 50.7753, lng: 6.0839 },
+      { code: "LYS8", city: "Lyon", country: "France", lat: 45.7640, lng: 4.8357 },
+      { code: "LYS1", city: "Lyon", country: "France", lat: 45.7650, lng: 4.8370 },
+      { code: "DWP1", city: "Marseille", country: "France", lat: 43.2980, lng: 5.3720 },
+      { code: "DWP2", city: "Marseille", country: "France", lat: 43.2965, lng: 5.3698 },
+      { code: "MRS1", city: "Marseille", country: "France", lat: 44.5600, lng: 4.7520 },
+      { code: "MRS9", city: "Marseille", country: "France", lat: 44.5583, lng: 4.7500 },
+      { code: "XCR2", city: "Lille", country: "France", lat: 50.6292, lng: 3.0573 },
+      { code: "LIL1", city: "Lille", country: "France", lat: 50.4167, lng: 3.1167 },
+      { code: "LIL8", city: "Lille", country: "France", lat: 50.3700, lng: 3.0800 },
+      { code: "XOR4", city: "Paris", country: "France", lat: 48.8580, lng: 2.3530 },
+      { code: "XOR1", city: "Paris", country: "France", lat: 48.8566, lng: 2.3522 },
+      { code: "CDG7", city: "Paris", country: "France", lat: 49.2070, lng: 2.5850 },
+      { code: "CDG8", city: "Paris", country: "France", lat: 49.2100, lng: 2.5880 },
+      { code: "ORY1", city: "Orleans", country: "France", lat: 47.9500, lng: 1.8833 },
+      { code: "ORY4", city: "Orleans", country: "France", lat: 47.9520, lng: 1.8850 },
+      { code: "BVA1", city: "Beauvais", country: "France", lat: 49.4294, lng: 2.0808 },
+
+      // ITALY FCs
+      { code: "BGY1", city: "Milano", country: "Italy", lat: 45.6739, lng: 9.7042 },
+      { code: "LIN8", city: "Milano", country: "Italy", lat: 45.4450, lng: 9.2780 },
+      { code: "MXP3", city: "Milano", country: "Italy", lat: 45.0550, lng: 9.4300 },
+      { code: "MXP5", city: "Milano", country: "Italy", lat: 45.0583, lng: 9.4333 },
+      { code: "MXP6", city: "Milano", country: "Italy", lat: 45.0600, lng: 9.4350 },
+      { code: "MXP8", city: "Milano", country: "Italy", lat: 45.0620, lng: 9.4370 },
+      { code: "BLQ1", city: "Modena", country: "Italy", lat: 45.0333, lng: 11.5833 },
+      { code: "BLQ8", city: "Modena", country: "Italy", lat: 44.6471, lng: 10.9252 },
+      { code: "FCO1", city: "Roma", country: "Italy", lat: 42.1667, lng: 12.6500 },
+      { code: "FCO2", city: "Roma", country: "Italy", lat: 42.1690, lng: 12.6520 },
+      { code: "FCO9", city: "Roma", country: "Italy", lat: 42.1700, lng: 12.6540 },
+      { code: "PSR2", city: "Pescara", country: "Italy", lat: 42.4643, lng: 14.2142 },
+      { code: "TRN1", city: "Torino", country: "Italy", lat: 45.2167, lng: 7.9667 },
+      { code: "TRN3", city: "Torino", country: "Italy", lat: 45.2180, lng: 7.9680 },
+
+      // POLAND, CZECH, SLOVAKIA, ETC.
+      { code: "KTW3", city: "Katowice", country: "Poland", lat: 50.2944, lng: 18.6714 },
+      { code: "KTW5", city: "Katowice", country: "Poland", lat: 50.2980, lng: 18.6750 },
+      { code: "WRO1", city: "Wroclaw", country: "Poland", lat: 51.0500, lng: 16.9667 },
+      { code: "WRO2", city: "Wroclaw", country: "Poland", lat: 51.0520, lng: 16.9680 },
+      { code: "WRO5", city: "Wroclaw", country: "Poland", lat: 51.1079, lng: 17.0385 },
+      { code: "POZ1", city: "Poznan", country: "Poland", lat: 52.4500, lng: 16.6833 },
+      { code: "POZ2", city: "Poznan", country: "Poland", lat: 52.4520, lng: 16.6850 },
+      { code: "XPO1", city: "Poznan", country: "Poland", lat: 52.4540, lng: 16.6870 },
+      { code: "SZZ1", city: "Szczecin", country: "Poland", lat: 53.3333, lng: 14.4500 },
+      { code: "LCJ2", city: "Łódź", country: "Poland", lat: 51.7592, lng: 19.4560 },
+      { code: "LCJ3", city: "Łódź", country: "Poland", lat: 51.7600, lng: 19.4570 },
+      { code: "LCJ4", city: "Łódź", country: "Poland", lat: 51.7610, lng: 19.4580 },
+      { code: "BTS2", city: "Bratislava", country: "Slovakia", lat: 48.1486, lng: 17.1077 },
+      { code: "BRQ2", city: "Brno", country: "Czech Republic", lat: 49.1951, lng: 16.6078 },
+      { code: "PRG2", city: "Prague", country: "Czech Republic", lat: 50.1167, lng: 14.2167 },
+      { code: "PRG9", city: "Prague", country: "Czech Republic", lat: 50.1180, lng: 14.2200 },
+      { code: "ETZ2", city: "Esch", country: "Luxembourg", lat: 49.4958, lng: 5.9806 },
+      { code: "RLG1", city: "Riga", country: "Latvia", lat: 56.9496, lng: 24.1052 }
+    ];
+
+    // Alphabetical Sorting for Auto-complete
+    function codeComparator(a, b) {
+      return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+    }
+    fulfillmentCenters.sort(codeComparator);
+
+    const presets = {
+      default: {
+        '--bg-header': 'rgba(35, 47, 62, 0.95)',
+        '--text-header': '#ffffff',
+        '--accent-color': '#ff9900',
+        '--accent-hover': '#e68a00',
+        '--accent-text': '#111111',
+        '--sidebar-bg': '#ffffff',
+        '--sidebar-header-bg': '#131921',
+        '--sidebar-header-text': '#ffffff',
+        '--card-bg': '#ffffff',
+        '--card-text': '#111111',
+        '--fc-color': '#0066cc',
+        '--rail-color': '#9c27b0',
+        '--rail-bg-light': '#f3e5f5',
+        '--selected-color': '#1b8a3d',
+        '--circle-stroke': '#ff9900',
+        '--circle-fill': '#ff9900',
+        '--circle-opacity': 0.15,
+        '--dropdown-bg': '#ffffff',
+        '--dropdown-text': '#111111',
+        '--dropdown-hover-bg': '#f0f4f8',
+        '--dropdown-border': '#cccccc'
+      },
+      light: {
+        '--bg-header': 'rgba(255, 255, 255, 0.95)',
+        '--text-header': '#222222',
+        '--accent-color': '#059669',
+        '--accent-hover': '#047857',
+        '--accent-text': '#ffffff',
+        '--sidebar-bg': '#f8fafc',
+        '--sidebar-header-bg': '#e2e8f0',
+        '--sidebar-header-text': '#0f172a',
+        '--card-bg': '#ffffff',
+        '--card-text': '#0f172a',
+        '--fc-color': '#2563eb',
+        '--rail-color': '#7c3aed',
+        '--rail-bg-light': '#ede9fe',
+        '--selected-color': '#166534',
+        '--circle-stroke': '#059669',
+        '--circle-fill': '#10b981',
+        '--circle-opacity': 0.12,
+        '--dropdown-bg': '#ffffff',
+        '--dropdown-text': '#0f172a',
+        '--dropdown-hover-bg': '#e2e8f0',
+        '--dropdown-border': '#cbd5e1'
+      },
+      rose: {
+        '--bg-header': 'rgba(74, 29, 62, 0.95)',
+        '--text-header': '#fce7f3',
+        '--accent-color': '#f43f5e',
+        '--accent-hover': '#e11d48',
+        '--accent-text': '#ffffff',
+        '--sidebar-bg': '#fdf2f8',
+        '--sidebar-header-bg': '#831843',
+        '--sidebar-header-text': '#fbcfe8',
+        '--card-bg': '#ffffff',
+        '--card-text': '#701a75',
+        '--fc-color': '#0284c7',
+        '--rail-color': '#a21caf',
+        '--rail-bg-light': '#fae8ff',
+        '--selected-color': '#15803d',
+        '--circle-stroke': '#f43f5e',
+        '--circle-fill': '#fb7185',
+        '--circle-opacity': 0.2,
+        '--dropdown-bg': '#fdf2f8',
+        '--dropdown-text': '#701a75',
+        '--dropdown-hover-bg': '#fbcfe8',
+        '--dropdown-border': '#f472b6'
+      },
+      vscode: {
+        '--bg-header': 'rgba(30, 30, 30, 0.95)',
+        '--text-header': '#9cdcfe',
+        '--accent-color': '#ce9178',
+        '--accent-hover': '#b57a63',
+        '--accent-text': '#1e1e1e',
+        '--sidebar-bg': '#252526',
+        '--sidebar-header-bg': '#333333',
+        '--sidebar-header-text': '#4ec9b0',
+        '--card-bg': '#1e1e1e',
+        '--card-text': '#d4d4d4',
+        '--fc-color': '#569cd6',
+        '--rail-color': '#c586c0',
+        '--rail-bg-light': '#3a2d39',
+        '--selected-color': '#4caf50',
+        '--circle-stroke': '#ce9178',
+        '--circle-fill': '#ce9178',
+        '--circle-opacity': 0.18,
+        '--dropdown-bg': '#252526',
+        '--dropdown-text': '#d4d4d4',
+        '--dropdown-hover-bg': '#37373d',
+        '--dropdown-border': '#454545'
+      },
+      ocean: {
+        '--bg-header': 'rgba(15, 23, 42, 0.95)',
+        '--text-header': '#38bdf8',
+        '--accent-color': '#f59e0b',
+        '--accent-hover': '#d97706',
+        '--accent-text': '#0f172a',
+        '--sidebar-bg': '#0f172a',
+        '--sidebar-header-bg': '#1e293b',
+        '--sidebar-header-text': '#f8fafc',
+        '--card-bg': '#1e293b',
+        '--card-text': '#f1f5f9',
+        '--fc-color': '#38bdf8',
+        '--rail-color': '#a855f7',
+        '--rail-bg-light': '#2e1065',
+        '--selected-color': '#22c55e',
+        '--circle-stroke': '#f59e0b',
+        '--circle-fill': '#f59e0b',
+        '--circle-opacity': 0.15,
+        '--dropdown-bg': '#1e293b',
+        '--dropdown-text': '#f1f5f9',
+        '--dropdown-hover-bg': '#334155',
+        '--dropdown-border': '#475569'
+      }
+    };
+
+    let activeCircleLayers = [];
+    let currentRadiusItems = [];
+    let selectedPoint1 = null;
+    let selectedPoint2 = null;
+    let currentRoutePolyline = null;
+    let boxMarkers = [];
+    let circlesVisible = true;
+    let showingAll = false;
+
+    /* --- USER PREFERENCES STATE --- */
+    let userPreferences = {
+      radiusKm: 150,
+      showRailways: true,
+      currency: 'EUR'
+    };
+
+    const map = L.map('map', { zoomSnap: 0.5, zoomDelta: 0.5, zoomControl: false }).setView([50.1109, 8.6821], 5);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let activeLayers = L.layerGroup().addTo(map);
+    let showAllLayers = L.markerClusterGroup({
+      maxClusterRadius: 45,
+      disableClusteringAtZoom: 9,
+      spiderfyOnMaxZoom: false,
+      zoomToBoundsOnClick: false,
+      showCoverageOnHover: false
+    }).addTo(map);
+    let preShowAllItems = null;
+    let customFacilities = [];
+
+    /* --- CLUSTER CLICK: SHOW A NAMED LIST INSTEAD OF AUTO-ZOOMING --- */
+    showAllLayers.on('clusterclick', function(e) {
+      const cluster = e.layer;
+      const facilities = cluster.getAllChildMarkers()
+        .map(m => m.fcData)
+        .filter(Boolean)
+        .sort(codeComparator);
+
+      const container = document.createElement('div');
+      container.className = 'cluster-popup-list';
+
+      const header = document.createElement('div');
+      header.className = 'cluster-popup-header';
+      header.textContent = `${facilities.length} facilities here`;
+      container.appendChild(header);
+
+      const zoomLink = document.createElement('div');
+      zoomLink.className = 'cluster-popup-zoom-link';
+      zoomLink.textContent = 'Zoom into this area ↗';
+      zoomLink.onclick = () => {
+        map.closePopup();
+        map.fitBounds(cluster.getBounds(), { padding: [40, 40] });
+      };
+      container.appendChild(zoomLink);
+
+      const list = document.createElement('div');
+      list.className = 'cluster-popup-items';
+      facilities.forEach(fc => {
+        const item = document.createElement('div');
+        item.className = 'cluster-popup-item' + (fc.type === 'rail' ? ' rail' : '');
+        item.innerHTML = `<strong>${fc.code}</strong><span>${fc.city}</span>`;
+        item.onclick = () => {
+          map.closePopup();
+          map.setView([fc.lat, fc.lng], Math.max(map.getZoom(), 10), { animate: true });
+          handleFacilityClickByCode(fc.code);
+        };
+        list.appendChild(item);
+      });
+      container.appendChild(list);
+
+      L.popup({ maxWidth: 240, className: 'cluster-popup-wrapper' })
+        .setLatLng(cluster.getLatLng())
+        .setContent(container)
+        .openOn(map);
+    });
+
+    /* --- SETTINGS PERSISTENCE (localStorage) --- */
+    const SETTINGS_STORAGE_KEY = 'amzFleetTracker.settings.v1';
+    const THEME_VARS = [
+      '--bg-header', '--text-header', '--accent-color', '--accent-hover', '--accent-text',
+      '--sidebar-bg', '--sidebar-header-bg', '--sidebar-header-text', '--card-bg', '--card-text',
+      '--fc-color', '--rail-color', '--rail-bg-light', '--selected-color',
+      '--circle-stroke', '--circle-fill', '--circle-opacity',
+      '--dropdown-bg', '--dropdown-text', '--dropdown-hover-bg', '--dropdown-border'
+    ];
+
+    function saveSettingsToStorage() {
+      try {
+        const style = getComputedStyle(document.documentElement);
+        const theme = {};
+        THEME_VARS.forEach(v => { theme[v] = style.getPropertyValue(v).trim(); });
+
+        const activePresetBtn = document.querySelector('.preset-btn.active');
+        const activePreset = activePresetBtn ? activePresetBtn.id.replace('btn-preset-', '') : 'custom';
+
+        const uiToggles = {
+          controls: document.getElementById('toggle-top-controls').checked,
+          selectionBanner: document.getElementById('toggle-selection-banner').checked,
+          sidebar: document.getElementById('toggle-sidebar').checked,
+          routePlanner: document.getElementById('toggle-route-planner').checked,
+          radiusCircles: document.getElementById('toggle-radius-circles').checked
+        };
+
+        const payload = { theme, activePreset, userPreferences, circlesVisible, uiToggles };
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(payload));
+      } catch (err) {
+        console.warn('Could not save settings:', err);
+      }
+    }
+
+    function loadSettingsFromStorage() {
+      try {
+        const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        if (!raw) return false;
+        const saved = JSON.parse(raw);
+
+        if (saved.theme) {
+          Object.entries(saved.theme).forEach(([k, v]) => {
+            if (v) document.documentElement.style.setProperty(k, v);
+          });
+        }
+
+        document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+        const presetBtn = document.getElementById(`btn-preset-${saved.activePreset || 'default'}`);
+        if (presetBtn) presetBtn.classList.add('active');
+
+        if (saved.userPreferences) {
+          userPreferences = Object.assign(userPreferences, saved.userPreferences);
+        }
+
+        if (typeof saved.circlesVisible === 'boolean') {
+          circlesVisible = saved.circlesVisible;
+        }
+
+        if (saved.uiToggles) {
+          if (saved.uiToggles.controls === false) toggleUIMenu('controls', false);
+          if (saved.uiToggles.selectionBanner === false) toggleUIMenu('selection-banner', false);
+          if (saved.uiToggles.sidebar === false) toggleUIMenu('sidebar', false);
+          if (saved.uiToggles.routePlanner === false) toggleUIMenu('route-planner', false);
+
+          document.getElementById('toggle-top-controls').checked = saved.uiToggles.controls !== false;
+          document.getElementById('toggle-selection-banner').checked = saved.uiToggles.selectionBanner !== false;
+          document.getElementById('toggle-sidebar').checked = saved.uiToggles.sidebar !== false;
+          document.getElementById('toggle-route-planner').checked = saved.uiToggles.routePlanner !== false;
+          document.getElementById('toggle-radius-circles').checked = saved.uiToggles.radiusCircles !== false;
+        }
+
+        return true;
+      } catch (err) {
+        console.warn('Could not load saved settings:', err);
+        return false;
+      }
+    }
+
+    /* --- CUSTOM FACILITY MANAGEMENT --- */
+    const CUSTOM_FACILITIES_KEY = 'amzFleetTracker.customFacilities.v1';
+
+    function loadCustomFacilities() {
+      try {
+        const raw = localStorage.getItem(CUSTOM_FACILITIES_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (Array.isArray(saved)) {
+          customFacilities = saved;
+          customFacilities.forEach(fc => fulfillmentCenters.push(fc));
+          fulfillmentCenters.sort(codeComparator);
+        }
+      } catch (err) {
+        console.warn('Could not load custom facilities:', err);
+      }
+    }
+
+    function saveCustomFacilities() {
+      try {
+        localStorage.setItem(CUSTOM_FACILITIES_KEY, JSON.stringify(customFacilities));
+      } catch (err) {
+        console.warn('Could not save custom facilities:', err);
+      }
+    }
+
+    function validateFacilityInput(code, city, country, lat, lng) {
+      if (!code) return 'Facility code is required.';
+      if (fulfillmentCenters.some(fc => fc.code.toUpperCase() === code.toUpperCase())) return `Code "${code}" already exists.`;
+      if (!city) return 'City is required (auto-detection may have failed — enter it manually).';
+      if (!country) return 'Country is required (auto-detection may have failed — enter it manually).';
+      if (isNaN(lat) || lat < -90 || lat > 90) return 'Latitude must be a number between -90 and 90.';
+      if (isNaN(lng) || lng < -180 || lng > 180) return 'Longitude must be a number between -180 and 180.';
+      return null;
+    }
+
+    /* --- COORDINATE PARSING (accepts "lat, lng" as copied straight from Google Maps) --- */
+    function parseCoordinatesString(raw) {
+      if (!raw) return null;
+      const trimmed = raw.trim();
+
+      // Accepts, in any mix of spacing/punctuation:
+      //   "48.7758, 9.1829"        (plain signed decimal)
+      //   "48.7758 9.1829"
+      //   "47.482761N, 12.027662E" (decimal + N/S/E/W direction letter)
+      //   "47.482761 N 12.027662 E"
+      const match = trimmed.match(/^(-?\d+(?:\.\d+)?)\s*°?\s*([NnSs])?(?:[,;]\s*|\s+)(-?\d+(?:\.\d+)?)\s*°?\s*([EeWw])?$/);
+      if (!match) return null;
+
+      let lat = parseFloat(match[1]);
+      const latDir = match[2] ? match[2].toUpperCase() : null;
+      if (latDir === 'S') lat = -Math.abs(lat);
+      else if (latDir === 'N') lat = Math.abs(lat);
+
+      let lng = parseFloat(match[3]);
+      const lngDir = match[4] ? match[4].toUpperCase() : null;
+      if (lngDir === 'W') lng = -Math.abs(lng);
+      else if (lngDir === 'E') lng = Math.abs(lng);
+
+      if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+      return { lat, lng };
+    }
+
+    /* --- REVERSE GEOCODING (OpenStreetMap Nominatim) --- */
+    async function reverseGeocode(lat, lng) {
+      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=10&addressdetails=1`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Reverse geocoding returned ${res.status}`);
+      const data = await res.json();
+      const addr = data.address || {};
+      const city = addr.city || addr.town || addr.village || addr.municipality || addr.county || '';
+      const country = addr.country || '';
+      return { city, country };
+    }
+
+    async function handleCoordsBlur() {
+      const coordsInput = document.getElementById('new-fac-coords');
+      const statusEl = document.getElementById('coords-detect-status');
+      const cityInput = document.getElementById('new-fac-city');
+      const countryInput = document.getElementById('new-fac-country');
+
+      const raw = coordsInput.value.trim();
+      statusEl.classList.remove('error-text');
+      if (!raw) { statusEl.textContent = ''; return; }
+
+      const coords = parseCoordinatesString(raw);
+      if (!coords) {
+        statusEl.textContent = 'Could not read that — try "48.7758, 9.1829" or "47.4827N, 12.0276E".';
+        statusEl.classList.add('error-text');
+        return;
+      }
+
+      statusEl.textContent = 'Looking up city & country…';
+      try {
+        const detected = await reverseGeocode(coords.lat, coords.lng);
+        if (detected.city) cityInput.value = detected.city;
+        if (detected.country) countryInput.value = detected.country;
+        statusEl.textContent = (detected.city || detected.country)
+          ? `Detected: ${detected.city}${detected.city && detected.country ? ', ' : ''}${detected.country}`
+          : 'Could not detect a place name — please fill City/Country in manually.';
+      } catch (err) {
+        console.warn('Reverse geocoding failed:', err);
+        statusEl.textContent = 'Could not auto-detect location — please fill City/Country in manually.';
+      }
+    }
+
+    function refreshAfterFacilityChange() {
+      // Refresh whatever view is currently active so added/removed facilities show up immediately
+      if (showingAll) {
+        applyShowAllExtras();
+      } else if (document.getElementById('fcInput').value.trim()) {
+        drawRadiusMap();
+      }
+      renderCustomFacilitiesList();
+    }
+
+    async function addFacilityFromForm() {
+      const errorEl = document.getElementById('add-facility-error');
+      errorEl.classList.remove('error');
+      errorEl.textContent = '';
+
+      const code = document.getElementById('new-fac-code').value.trim().toUpperCase();
+      const coordsRaw = document.getElementById('new-fac-coords').value.trim();
+      const type = document.getElementById('new-fac-type').value;
+      const cityInput = document.getElementById('new-fac-city');
+      const countryInput = document.getElementById('new-fac-country');
+      const statusEl = document.getElementById('coords-detect-status');
+      const addBtn = document.getElementById('add-facility-btn');
+
+      const coords = parseCoordinatesString(coordsRaw);
+      if (!coords) {
+        errorEl.textContent = 'Enter valid coordinates, e.g. "48.7758, 9.1829" or "47.4827N, 12.0276E" — paste straight from Google Maps.';
+        errorEl.classList.add('error');
+        return;
+      }
+
+      let city = cityInput.value.trim();
+      let country = countryInput.value.trim();
+
+      // If city/country weren't auto-filled yet (e.g. pasted and clicked Add without leaving the field), detect now
+      if (!city || !country) {
+        const originalBtnText = addBtn.textContent;
+        addBtn.disabled = true;
+        addBtn.textContent = 'Looking up location…';
+        statusEl.classList.remove('error-text');
+        statusEl.textContent = 'Looking up city & country…';
+
+        try {
+          const detected = await reverseGeocode(coords.lat, coords.lng);
+          if (!city && detected.city) { city = detected.city; cityInput.value = city; }
+          if (!country && detected.country) { country = detected.country; countryInput.value = country; }
+          statusEl.textContent = (city || country) ? `Detected: ${city}${city && country ? ', ' : ''}${country}` : '';
+        } catch (err) {
+          console.warn('Reverse geocoding failed:', err);
+        } finally {
+          addBtn.disabled = false;
+          addBtn.textContent = originalBtnText;
+        }
+      }
+
+      const error = validateFacilityInput(code, city, country, coords.lat, coords.lng);
+      if (error) {
+        errorEl.textContent = error;
+        errorEl.classList.add('error');
+        return;
+      }
+
+      const newFacility = { code, city, country, lat: coords.lat, lng: coords.lng };
+      if (type === 'rail') newFacility.type = 'rail';
+
+      fulfillmentCenters.push(newFacility);
+      fulfillmentCenters.sort(codeComparator);
+      customFacilities.push(newFacility);
+      saveCustomFacilities();
+
+      ['new-fac-code', 'new-fac-coords', 'new-fac-city', 'new-fac-country'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('new-fac-type').value = 'fc';
+      statusEl.textContent = '';
+
+      refreshAfterFacilityChange();
+    }
+
+    function removeCustomFacility(code) {
+      const idx = fulfillmentCenters.findIndex(fc => fc.code === code);
+      if (idx !== -1) fulfillmentCenters.splice(idx, 1);
+      customFacilities = customFacilities.filter(fc => fc.code !== code);
+      saveCustomFacilities();
+      refreshAfterFacilityChange();
+    }
+
+    function renderCustomFacilitiesList() {
+      const listEl = document.getElementById('custom-facilities-list');
+      const countEl = document.getElementById('custom-facility-count');
+      if (!listEl || !countEl) return;
+
+      countEl.textContent = customFacilities.length.toString();
+
+      if (customFacilities.length === 0) {
+        listEl.innerHTML = '<div class="empty-state" style="margin: 8px 0;">No custom facilities added yet.</div>';
+        return;
+      }
+
+      listEl.innerHTML = customFacilities.slice().sort(codeComparator).map(fc => `
+        <div class="custom-facility-row">
+          <span class="cf-info" title="${fc.city}, ${fc.country}"><strong>${fc.code}</strong> — ${fc.city}, ${fc.country}${fc.type === 'rail' ? ' (Rail Hub)' : ''}</span>
+          <button class="cf-remove-btn" onclick="removeCustomFacility('${fc.code}')" title="Remove ${fc.code}">&times;</button>
+        </div>
+      `).join('');
+    }
+
+    function importFacilitiesFromCSV() {
+      const resultEl = document.getElementById('csv-import-result');
+      resultEl.classList.remove('error', 'success');
+      const raw = document.getElementById('csv-import-textarea').value.trim();
+
+      if (!raw) {
+        resultEl.textContent = 'Paste CSV data first.';
+        resultEl.classList.add('error');
+        return;
+      }
+
+      const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      let added = 0;
+      let skipped = 0;
+      const errors = [];
+
+      lines.forEach((line, i) => {
+        const parts = line.split(',').map(p => p.trim().replace(/^"|"$/g, ''));
+        if (parts.length < 5) { skipped++; errors.push(`Line ${i + 1}: expected at least 5 columns.`); return; }
+
+        const [codeRaw, city, country, latRaw, lngRaw, typeRaw] = parts;
+        if (i === 0 && codeRaw.toLowerCase() === 'code') return; // skip an optional header row
+
+        const code = codeRaw.toUpperCase();
+        const lat = parseFloat(latRaw);
+        const lng = parseFloat(lngRaw);
+        const type = (typeRaw || '').toLowerCase() === 'rail' ? 'rail' : undefined;
+
+        const error = validateFacilityInput(code, city, country, lat, lng);
+        if (error) {
+          skipped++;
+          errors.push(`Line ${i + 1} (${codeRaw || '?'}): ${error}`);
+          return;
+        }
+
+        const newFacility = { code, city, country, lat, lng };
+        if (type) newFacility.type = type;
+
+        fulfillmentCenters.push(newFacility);
+        customFacilities.push(newFacility);
+        added++;
+      });
+
+      fulfillmentCenters.sort(codeComparator);
+      saveCustomFacilities();
+      document.getElementById('csv-import-textarea').value = '';
+
+      const summary = `Added ${added} facilit${added === 1 ? 'y' : 'ies'}${skipped > 0 ? `, skipped ${skipped}` : ''}.`;
+      resultEl.textContent = summary + (errors.length > 0 ? ' ' + errors.slice(0, 3).join(' | ') : '');
+      resultEl.classList.add(added > 0 ? 'success' : 'error');
+
+      refreshAfterFacilityChange();
+    }
+
+    /* --- PREFERENCES UPDATE LOGIC --- */
+    function updateUserPreferences() {
+      const radiusInput = document.getElementById('cfg-radius-distance');
+      const railToggle = document.getElementById('toggle-railway-hubs');
+      const currencySelect = document.getElementById('cfg-currency-type');
+
+      if (radiusInput) userPreferences.radiusKm = parseFloat(radiusInput.value) || 150;
+      if (railToggle) userPreferences.showRailways = railToggle.checked;
+      if (currencySelect) userPreferences.currency = currencySelect.value;
+
+      if (showingAll) {
+        applyShowAllExtras();
+      } else {
+        drawRadiusMap();
+      }
+
+      saveSettingsToStorage();
+    }
+
+    /* --- UI TOGGLE LOGIC --- */
+    function toggleUIMenu(elementId, isVisible) {
+      const el = document.getElementById(elementId);
+      if (el) {
+        el.style.display = isVisible ? (elementId === 'controls' ? 'flex' : 'flex') : 'none';
+      }
+      saveSettingsToStorage();
+    }
+
+    function toggleMapCircles(isVisible) {
+      circlesVisible = isVisible;
+      activeCircleLayers.forEach(circle => {
+        if (isVisible) {
+          if (!map.hasLayer(circle)) circle.addTo(map);
+        } else {
+          if (map.hasLayer(circle)) map.removeLayer(circle);
+        }
+      });
+      saveSettingsToStorage();
+    }
+
+    /* --- AUTOCOMPLETE & TAB CYCLING LOGIC --- */
+    function setupAutocomplete(inputId, dropdownId, onSelectCallback) {
+      const input = document.getElementById(inputId);
+      const dropdown = document.getElementById(dropdownId);
+      let currentMatches = [];
+      let activeIndex = -1;
+
+      input.addEventListener('input', function() {
+        const val = this.value.trim().toUpperCase();
+        dropdown.innerHTML = '';
+        activeIndex = -1;
+
+        if (!val) {
+          dropdown.style.display = 'none';
+          return;
+        }
+
+        // Support comma separated lists for the top search input
+        const terms = val.split(',');
+        const lastTerm = terms[terms.length - 1].trim();
+
+        if (!lastTerm) {
+          dropdown.style.display = 'none';
+          return;
+        }
+
+        currentMatches = fulfillmentCenters.filter(fc => {
+          if (fc.type === 'rail' && !userPreferences.showRailways) return false;
+          const codeMatch = fc.code.startsWith(lastTerm);
+          const cityMatch = fc.city.toUpperCase().includes(lastTerm);
+          const countryMatch = fc.country.toUpperCase().includes(lastTerm);
+          return codeMatch || cityMatch || countryMatch;
+        }).sort((a, b) => {
+          const aRank = a.code.startsWith(lastTerm) ? 0 : 1;
+          const bRank = b.code.startsWith(lastTerm) ? 0 : 1;
+          if (aRank !== bRank) return aRank - bRank;
+          return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+        });
+
+        if (currentMatches.length === 0) {
+          dropdown.style.display = 'none';
+          return;
+        }
+
+        currentMatches.forEach((fc, idx) => {
+          const div = document.createElement('div');
+          div.className = 'autocomplete-suggestion';
+          div.innerHTML = `<span><strong>${fc.code}</strong></span><span class="sub-info">${fc.city}</span>`;
+          div.addEventListener('click', function() {
+            selectMatch(fc.code);
+          });
+          dropdown.appendChild(div);
+        });
+
+        dropdown.style.display = 'block';
+      });
+
+      function selectMatch(code) {
+        const terms = input.value.split(',');
+        terms[terms.length - 1] = code;
+        input.value = terms.join(', ');
+        dropdown.style.display = 'none';
+        activeIndex = -1;
+        if (onSelectCallback) onSelectCallback(code);
+      }
+
+      input.addEventListener('keydown', function(e) {
+        const dropdownOpen = dropdown.style.display === 'block' && currentMatches.length > 0;
+
+        if (dropdownOpen && e.key === 'Tab') {
+          e.preventDefault();
+          if (e.shiftKey) {
+            activeIndex = (activeIndex - 1 + currentMatches.length) % currentMatches.length;
+          } else {
+            activeIndex = (activeIndex + 1) % currentMatches.length;
+          }
+          highlightActive(dropdown);
+          const terms = input.value.split(',');
+          terms[terms.length - 1] = currentMatches[activeIndex].code;
+          input.value = terms.join(', ');
+          return;
+        }
+
+        if (dropdownOpen && e.key === 'Escape') {
+          dropdown.style.display = 'none';
+          return;
+        }
+
+        // Enter always confirms and moves on — whether the dropdown has a match
+        // (e.g. a facility code) or not (e.g. typed coordinates for a truck's current position)
+        if (e.key === 'Enter') {
+          e.preventDefault();
+
+          if (dropdownOpen) {
+            if (activeIndex >= 0 && activeIndex < currentMatches.length) {
+              selectMatch(currentMatches[activeIndex].code);
+            } else {
+              selectMatch(currentMatches[0].code);
+            }
+          } else {
+            dropdown.style.display = 'none';
+          }
+
+          // Smart Next-Input Navigation
+          if (inputId === 'route-from') {
+            document.getElementById('route-to').focus();
+          } else if (inputId === 'route-to') {
+            triggerBoxRoute();
+          } else if (inputId === 'fcInput') {
+            drawRadiusMap();
+          }
+        }
+      });
+
+      function highlightActive(dropdownEl) {
+        const items = dropdownEl.querySelectorAll('.autocomplete-suggestion');
+        items.forEach((item, index) => {
+          if (index === activeIndex) {
+            item.classList.add('active');
+            item.scrollIntoView({ block: 'nearest' });
+          } else {
+            item.classList.remove('active');
+          }
+        });
+      }
+
+      document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+          dropdown.style.display = 'none';
+        }
+      });
+    }
+
+    setupAutocomplete('fcInput', 'dropdown-fcInput');
+    setupAutocomplete('route-from', 'dropdown-route-from');
+    setupAutocomplete('route-to', 'dropdown-route-to');
+
+    /* --- SETTINGS & THEME LOGIC --- */
+    function toggleSettingsTab(tabId) {
+      const tab = document.getElementById(tabId);
+      const wasOpen = tab.classList.contains('open');
+      const settingsBody = document.getElementById('settings-body');
+
+      // Close every tab first
+      document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('open'));
+
+      // Then reopen the clicked one, unless it was already open (back-arrow / re-click acts as "go back")
+      if (!wasOpen) {
+        tab.classList.add('open');
+        settingsBody.classList.add('detail-mode');
+        settingsBody.scrollTop = 0;
+      } else {
+        settingsBody.classList.remove('detail-mode');
+      }
+    }
+
+    function openSettingsModal() {
+      document.getElementById('settings-modal-overlay').style.display = 'flex';
+      // All settings tabs start closed, showing the main menu, every time the modal is opened
+      document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('open'));
+      document.getElementById('settings-body').classList.remove('detail-mode');
+      syncInputsFromVars();
+      renderCustomFacilitiesList();
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal-overlay').style.display = 'none';
+    }
+
+    function syncInputsFromVars() {
+      const style = getComputedStyle(document.documentElement);
+      const getVal = varName => style.getPropertyValue(varName).trim();
+
+      document.getElementById('cfg-bg-header').value = rgbaToHex(getVal('--bg-header'));
+      document.getElementById('cfg-text-header').value = getVal('--text-header');
+      document.getElementById('cfg-accent').value = getVal('--accent-color');
+      document.getElementById('cfg-accent-text').value = getVal('--accent-text');
+      document.getElementById('cfg-sidebar-bg').value = getVal('--sidebar-bg');
+      document.getElementById('cfg-sidebar-header-bg').value = getVal('--sidebar-header-bg');
+      document.getElementById('cfg-fc-color').value = getVal('--fc-color');
+      document.getElementById('cfg-rail-color').value = getVal('--rail-color');
+      document.getElementById('cfg-selected-color').value = getVal('--selected-color');
+      document.getElementById('cfg-card-text').value = getVal('--card-text');
+      document.getElementById('cfg-circle-stroke').value = getVal('--circle-stroke');
+      document.getElementById('cfg-circle-fill').value = getVal('--circle-fill');
+      document.getElementById('cfg-circle-opacity').value = getVal('--circle-opacity') || 0.15;
+      document.getElementById('cfg-dropdown-bg').value = rgbaToHex(getVal('--dropdown-bg'));
+      document.getElementById('cfg-dropdown-text').value = getVal('--dropdown-text');
+      document.getElementById('cfg-dropdown-hover-bg').value = rgbaToHex(getVal('--dropdown-hover-bg'));
+
+      // Sync preferences inputs
+      document.getElementById('cfg-radius-distance').value = userPreferences.radiusKm;
+      document.getElementById('toggle-railway-hubs').checked = userPreferences.showRailways;
+      document.getElementById('cfg-currency-type').value = userPreferences.currency;
+    }
+
+    function rgbaToHex(rgba) {
+      if (!rgba || rgba.startsWith('#')) return rgba || '#ffffff';
+      const parts = rgba.match(/\d+/g);
+      if (!parts || parts.length < 3) return '#ffffff';
+      const r = parseInt(parts[0]).toString(16).padStart(2, '0');
+      const g = parseInt(parts[1]).toString(16).padStart(2, '0');
+      const b = parseInt(parts[2]).toString(16).padStart(2, '0');
+      return `#${r}${g}${b}`;
+    }
+
+    function applyPreset(name) {
+      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`btn-preset-${name}`).classList.add('active');
+
+      if (name === 'custom') {
+        saveSettingsToStorage();
+        return;
+      }
+
+      const theme = presets[name];
+      for (const [key, val] of Object.entries(theme)) {
+        document.documentElement.style.setProperty(key, val);
+      }
+
+      updateCircles();
+      syncInputsFromVars();
+      saveSettingsToStorage();
+    }
+
+    function updateCustomColor(varName, value) {
+      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('btn-preset-custom').classList.add('active');
+      document.documentElement.style.setProperty(varName, value);
+      saveSettingsToStorage();
+    }
+
+    function updateCircleStyle(prop, value) {
+      document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById('btn-preset-custom').classList.add('active');
+
+      if (prop === 'stroke') document.documentElement.style.setProperty('--circle-stroke', value);
+      if (prop === 'fill') document.documentElement.style.setProperty('--circle-fill', value);
+      if (prop === 'opacity') document.documentElement.style.setProperty('--circle-opacity', value);
+
+      updateCircles();
+      saveSettingsToStorage();
+    }
+
+    function updateCircles() {
+      const style = getComputedStyle(document.documentElement);
+      const stroke = style.getPropertyValue('--circle-stroke').trim();
+      const fill = style.getPropertyValue('--circle-fill').trim();
+      const opacity = parseFloat(style.getPropertyValue('--circle-opacity').trim()) || 0.15;
+
+      activeCircleLayers.forEach(circle => {
+        circle.setStyle({ color: stroke, fillColor: fill, fillOpacity: opacity });
+      });
+    }
+
+    /* --- MAP ROUTING & CORE FUNCTIONALITY --- */
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    function copyCoordinates(e, lat, lng) {
+      e.stopPropagation();
+      const coordsText = `${lat}, ${lng}`;
+      navigator.clipboard.writeText(coordsText).then(() => {
+        const btn = e.currentTarget;
+        const origHTML = btn.innerHTML;
+        btn.innerHTML = `<svg viewBox="0 0 24 24"><path fill="#059669" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
+        setTimeout(() => {
+          btn.innerHTML = origHTML;
+        }, 1200);
+      }).catch(err => {
+        console.error("Failed to copy coordinates: ", err);
+      });
+    }
+
+    function renderSidebarList(items) {
+      const sidebarContent = document.getElementById('sidebar-content');
+      const countBadge = document.getElementById('fc-count-badge');
+      countBadge.innerText = items.length.toString();
+
+      const railCount = items.filter(i => i.type === 'rail').length;
+      const fcCount = items.length - railCount;
+      countBadge.title = items.length > 0 ? `${fcCount} Fulfillment Center${fcCount !== 1 ? 's' : ''} · ${railCount} Rail Hub${railCount !== 1 ? 's' : ''}` : '';
+
+      if (items.length === 0) {
+        sidebarContent.innerHTML = '<div class="empty-state">No matching facilities found.</div>';
+        return;
+      }
+
+      let html = '';
+      items.forEach(item => {
+        const isSelected = (selectedPoint1 && selectedPoint1.code === item.code) || 
+                           (selectedPoint2 && selectedPoint2.code === item.code);
+        const activeClass = isSelected ? 'selected-card' : '';
+        const copyBtnHtml = `
+          <button class="copy-coords-btn" title="Copy Coordinates (${item.lat}, ${item.lng})" onclick="copyCoordinates(event, ${item.lat}, ${item.lng})">
+            <svg viewBox="0 0 24 24">
+              <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+            </svg>
+          </button>
+        `;
+
+        if (item.isOrigin) {
+          html += `
+            <div class="fc-card truck-origin ${activeClass}" data-code="${item.code}" onclick="handleFacilityClickByCode('${item.code}')">
+              <div class="fc-card-header">
+                <span class="fc-code">${item.code}</span>
+                <span class="truck-badge">TRUCK ORIGIN</span>
+                ${copyBtnHtml}
+              </div>
+              <div class="fc-details" title="${item.city}, ${item.country}">${item.city}, ${item.country}</div>
+            </div>
+          `;
+        } else if (item.type === 'rail') {
+          const railBadge = item.dist != null ? `<span class="rail-dist">${item.dist.toFixed(1)} km</span>` : '<span style="margin-right:auto"></span>';
+          html += `
+            <div class="fc-card rail-card ${activeClass}" data-code="${item.code}" onclick="handleFacilityClickByCode('${item.code}')">
+              <div class="fc-card-header">
+                <span class="fc-code">${RAIL_ICON_SVG}${item.code}</span>
+                ${railBadge}
+                ${copyBtnHtml}
+              </div>
+              <div class="fc-details" title="${item.city}, ${item.country}">${item.city}, ${item.country}</div>
+            </div>
+          `;
+        } else {
+          const fcBadge = item.dist != null ? `<span class="fc-dist">${item.dist.toFixed(1)} km</span>` : '<span style="margin-right:auto"></span>';
+          html += `
+            <div class="fc-card ${activeClass}" data-code="${item.code}" onclick="handleFacilityClickByCode('${item.code}')">
+              <div class="fc-card-header">
+                <span class="fc-code">${item.code}</span>
+                ${fcBadge}
+                ${copyBtnHtml}
+              </div>
+              <div class="fc-details" title="${item.city}, ${item.country}">${item.city}, ${item.country}</div>
+            </div>
+          `;
+        }
+      });
+
+      sidebarContent.innerHTML = html;
+    }
+
+    function filterFacilities() {
+      const query = document.getElementById('filterInput').value.trim().toLowerCase();
+      if (!query) {
+        renderSidebarList(currentRadiusItems);
+        return;
+      }
+      const filtered = currentRadiusItems.filter(item => 
+        item.code.toLowerCase().includes(query) ||
+        item.city.toLowerCase().includes(query) ||
+        item.country.toLowerCase().includes(query)
+      );
+      renderSidebarList(filtered);
+    }
+
+    function removeRouteLine() {
+      if (currentRoutePolyline) {
+        map.removeLayer(currentRoutePolyline);
+        currentRoutePolyline = null;
+      }
+      boxMarkers.forEach(m => map.removeLayer(m));
+      boxMarkers = [];
+    }
+
+    function syncInputsWithSelection() {
+      document.getElementById('route-from').value = selectedPoint1 ? selectedPoint1.code : '';
+      document.getElementById('route-to').value = selectedPoint2 ? selectedPoint2.code : '';
+    }
+
+    function handleFacilityClickByCode(code) {
+      const fc = fulfillmentCenters.find(f => f.code === code);
+      if (fc) handleFacilityClick(fc);
+    }
+
+    function handleFacilityClick(fc) {
+      if (selectedPoint1 && selectedPoint1.code === fc.code) {
+        updateLabelHighlight(selectedPoint1.code, false);
+        selectedPoint1 = null;
+
+        if (selectedPoint2) {
+          selectedPoint1 = selectedPoint2;
+          selectedPoint2 = null;
+          removeRouteLine();
+          showBanner(`Selected: <strong>${selectedPoint1.code}</strong> (${selectedPoint1.city}, ${selectedPoint1.country}) — Click second location to route.`);
+        } else {
+          resetSelections();
+        }
+        syncInputsWithSelection();
+        filterFacilities();
+        return;
+      }
+
+      if (selectedPoint2 && selectedPoint2.code === fc.code) {
+        updateLabelHighlight(selectedPoint2.code, false);
+        selectedPoint2 = null;
+        removeRouteLine();
+        showBanner(`Selected: <strong>${selectedPoint1.code}</strong> (${selectedPoint1.city}, ${selectedPoint1.country}) — Click second location to route.`);
+        syncInputsWithSelection();
+        filterFacilities();
+        return;
+      }
+
+      if (!selectedPoint1) {
+        selectedPoint1 = fc;
+        updateLabelHighlight(fc.code, true);
+        showBanner(`Selected: <strong>${fc.code}</strong> (${fc.city}, ${fc.country}) — Click second location to route.`);
+      } else if (!selectedPoint2) {
+        selectedPoint2 = fc;
+        updateLabelHighlight(fc.code, true);
+        calculateAndDrawRoute(selectedPoint1, selectedPoint2);
+      } else {
+        updateLabelHighlight(selectedPoint2.code, false);
+        selectedPoint2 = fc;
+        updateLabelHighlight(fc.code, true);
+        calculateAndDrawRoute(selectedPoint1, selectedPoint2);
+      }
+
+      syncInputsWithSelection();
+      filterFacilities();
+    }
+
+    function updateLabelHighlight(code, isSelected) {
+      const labelDiv = document.querySelector(`.custom-map-label[data-code="${code}"]`);
+      if (labelDiv) {
+        if (isSelected) labelDiv.classList.add('selected-point');
+        else labelDiv.classList.remove('selected-point');
+      }
+
+      const cardBtn = document.querySelector(`.fc-card[data-code="${code}"]`);
+      if (cardBtn) {
+        if (isSelected) cardBtn.classList.add('selected-card');
+        else cardBtn.classList.remove('selected-card');
+      }
+    }
+
+    function resetSelections() {
+      if (selectedPoint1) updateLabelHighlight(selectedPoint1.code, false);
+      if (selectedPoint2) updateLabelHighlight(selectedPoint2.code, false);
+
+      selectedPoint1 = null;
+      selectedPoint2 = null;
+      removeRouteLine();
+
+      document.getElementById('selection-banner').style.display = 'none';
+      document.getElementById('selection-banner').classList.remove('error');
+      document.getElementById('route-from').value = '';
+      document.getElementById('route-to').value = '';
+      filterFacilities();
+    }
+
+    function showBanner(htmlContent, isError) {
+      const banner = document.getElementById('selection-banner');
+      if (document.getElementById('toggle-selection-banner').checked) {
+        document.getElementById('banner-text').innerHTML = htmlContent;
+        banner.classList.toggle('error', !!isError);
+        banner.style.display = 'flex';
+      }
+    }
+
+    function formatHours(hrs) {
+      const totalMinutes = Math.round(hrs * 60);
+      const h = Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      return h > 0 ? `${h}h ${m}m` : `${m}m`;
+    }
+
+    /* --- RESOLVE A ROUTE ENDPOINT: a facility code, OR raw coordinates (e.g. a truck's live position) --- */
+    function resolveRoutePoint(rawValue) {
+      const trimmed = rawValue.trim();
+      if (!trimmed) return { point: null, error: null };
+
+      const coords = parseCoordinatesString(trimmed);
+      if (coords) {
+        const label = `${coords.lat.toFixed(3)}, ${coords.lng.toFixed(3)}`;
+        return {
+          point: {
+            code: label,
+            city: 'Custom Location',
+            country: '',
+            lat: coords.lat,
+            lng: coords.lng,
+            isCustomPoint: true
+          },
+          error: null
+        };
+      }
+
+      const code = trimmed.toUpperCase();
+      const fc = fulfillmentCenters.find(f => f.code === code);
+      if (fc) return { point: fc, error: null };
+
+      return { point: null, error: `"${trimmed}" is not a known facility code or valid coordinates (e.g. "48.7758, 9.1829" or "47.4827N, 12.0276E").` };
+    }
+
+    function triggerBoxRoute() {
+      const raw1 = document.getElementById('route-from').value;
+      const raw2 = document.getElementById('route-to').value;
+
+      if (!raw1.trim() || !raw2.trim()) {
+        alert("Please provide both an origin and destination — a facility code or coordinates (e.g. 48.7758, 9.1829).");
+        return;
+      }
+
+      const resolved1 = resolveRoutePoint(raw1);
+      const resolved2 = resolveRoutePoint(raw2);
+
+      if (!resolved1.point) {
+        alert(resolved1.error || `Could not resolve origin "${raw1}".`);
+        return;
+      }
+      if (!resolved2.point) {
+        alert(resolved2.error || `Could not resolve destination "${raw2}".`);
+        return;
+      }
+
+      const fc1 = resolved1.point;
+      const fc2 = resolved2.point;
+
+      if (selectedPoint1) updateLabelHighlight(selectedPoint1.code, false);
+      if (selectedPoint2) updateLabelHighlight(selectedPoint2.code, false);
+
+      selectedPoint1 = fc1;
+      selectedPoint2 = fc2;
+
+      updateLabelHighlight(fc1.code, true);
+      updateLabelHighlight(fc2.code, true);
+
+      calculateAndDrawRoute(fc1, fc2);
+    }
+
+    function swapRoutePoints() {
+      const fromInput = document.getElementById('route-from');
+      const toInput = document.getElementById('route-to');
+      const temp = fromInput.value;
+      fromInput.value = toInput.value;
+      toInput.value = temp;
+
+      if (fromInput.value.trim() && toInput.value.trim()) {
+        triggerBoxRoute();
+      }
+    }
+
+    async function calculateAndDrawRoute(p1, p2) {
+      const calcBtn = document.getElementById('btn-calc-route');
+      const originalBtnHtml = calcBtn.innerHTML;
+      calcBtn.disabled = true;
+      calcBtn.classList.add('loading');
+      calcBtn.innerHTML = `<span class="btn-spinner"></span> Calculating`;
+
+      showBanner(`Calculating road route from <strong>${p1.code}</strong> to <strong>${p2.code}</strong>...`);
+
+      const url = `https://router.project-osrm.org/route/v1/driving/${p1.lng},${p1.lat};${p2.lng},${p2.lat}?overview=full&geometries=geojson`;
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Routing service returned ${response.status}`);
+        const data = await response.json();
+
+        if (data.routes && data.routes.length > 0) {
+          const route = data.routes[0];
+          const distanceKm = route.distance / 1000;
+
+          const travelHours = distanceKm / 90;
+          const timeText = formatHours(travelHours + (20 / 60));
+
+          removeRouteLine();
+
+          [p1, p2].forEach(p => {
+            const isRendered = document.querySelector(`.custom-map-label[data-code="${p.code}"]`);
+            if (!isRendered) {
+              const marker = createMapLabelMarker(p, p.city, !!p.isCustomPoint);
+              marker.addTo(map);
+              boxMarkers.push(marker);
+              updateLabelHighlight(p.code, true);
+            }
+          });
+
+          const style = getComputedStyle(document.documentElement);
+          const routeColor = style.getPropertyValue('--selected-color').trim() || '#1b8a3d';
+
+          const coordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]);
+          currentRoutePolyline = L.polyline(coordinates, {
+            color: routeColor,
+            weight: 5,
+            opacity: 0.85,
+            lineJoin: 'round'
+          }).addTo(map);
+
+          map.fitBounds(currentRoutePolyline.getBounds(), { padding: [50, 50] });
+
+          const bannerMsg = `Route: <strong>${p1.code}</strong> ➔ <strong>${p2.code}</strong> | Distance: <strong>${distanceKm.toFixed(1)} km</strong> | Est. Truck Time: <strong>${timeText}</strong> (Max 90 km/h + 20m buffer)`;
+          showBanner(bannerMsg);
+
+        } else {
+          showBanner(`Could not calculate driving route between <strong>${p1.code}</strong> and <strong>${p2.code}</strong>.`, true);
+        }
+      } catch (error) {
+        console.error("OSRM Routing Error:", error);
+        showBanner(`Routing error between <strong>${p1.code}</strong> and <strong>${p2.code}</strong>. Please try again.`, true);
+      } finally {
+        calcBtn.disabled = false;
+        calcBtn.classList.remove('loading');
+        calcBtn.innerHTML = originalBtnHtml;
+      }
+    }
+
+    /* RED GOOGLE MAPS STYLE PIN MARKER FOR TYPED TRUCK LOCATIONS */
+    function createMapLabelMarker(fc, distText, isOrigin) {
+      let htmlContent = '';
+
+      if (isOrigin) {
+        htmlContent = `
+          <div class="custom-map-label origin-label" data-code="${fc.code}">
+            <div class="google-pin-container">
+              <span class="google-pin-badge">${fc.code}</span>
+              <svg class="google-pin-svg" viewBox="0 0 384 512">
+                <path fill="#ea4335" d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0z"/>
+                <circle cx="192" cy="192" r="75" fill="#ffffff"/>
+              </svg>
+            </div>
+          </div>
+        `;
+      } else {
+        const isRail = fc.type === 'rail';
+        let extraClass = isRail ? 'rail-label' : '';
+        htmlContent = `
+          <div class="custom-map-label ${extraClass}" data-code="${fc.code}">
+            <span>${isRail ? RAIL_ICON_SVG : ''}${fc.code}</span>
+            ${distText ? `<div class="extra-info">${distText}</div>` : ''}
+          </div>
+        `;
+      }
+
+      const customIcon = L.divIcon({
+        className: 'label-container-icon',
+        html: htmlContent,
+        iconSize: [0, 0]
+      });
+
+      const marker = L.marker([fc.lat, fc.lng], { icon: customIcon });
+      marker.fcData = fc;
+      marker.on('click', () => handleFacilityClick(fc));
+      return marker;
+    }
+
+    function drawRadiusMap() {
+      if (showingAll) {
+        showingAll = false;
+        const eyeBtn = document.getElementById('show-all-btn');
+        if (eyeBtn) eyeBtn.classList.remove('active');
+      }
+      showAllLayers.clearLayers();
+      preShowAllItems = null;
+
+      activeLayers.clearLayers();
+      activeCircleLayers = [];
+      currentRadiusItems = [];
+      resetSelections();
+      document.getElementById('filterInput').value = '';
+
+      const inputVal = document.getElementById('fcInput').value;
+      const sidebarContent = document.getElementById('sidebar-content');
+      const countBadge = document.getElementById('fc-count-badge');
+
+      if (!inputVal.trim()) {
+        map.setView([50.1109, 8.6821], 5);
+        sidebarContent.innerHTML = `<div class="empty-state">Enter a location above to see all facilities inside its ${userPreferences.radiusKm} km radius.</div>`;
+        countBadge.innerText = '0';
+        return;
+      }
+
+      const selectedCodes = inputVal.split(',').map(s => s.trim().toUpperCase());
+      const bounds = L.latLngBounds();
+      let foundAny = false;
+      const renderedFCs = new Set();
+
+      const style = getComputedStyle(document.documentElement);
+      const stroke = style.getPropertyValue('--circle-stroke').trim();
+      const fill = style.getPropertyValue('--circle-fill').trim();
+      const opacity = parseFloat(style.getPropertyValue('--circle-opacity').trim()) || 0.15;
+
+      selectedCodes.forEach(code => {
+        const centerFC = fulfillmentCenters.find(fc => fc.code === code);
+
+        if (centerFC) {
+          // Skip if railway hubs are hidden and selected FC is rail
+          if (centerFC.type === 'rail' && !userPreferences.showRailways) return;
+
+          foundAny = true;
+
+          const circle = L.circle([centerFC.lat, centerFC.lng], {
+            radius: userPreferences.radiusKm * 1000,
+            color: stroke,
+            fillColor: fill,
+            fillOpacity: opacity,
+            weight: 2
+          });
+
+          if (circlesVisible) {
+            activeLayers.addLayer(circle);
+          }
+          activeCircleLayers.push(circle);
+
+          const originLabelMarker = createMapLabelMarker(centerFC, "Origin Location", true);
+          activeLayers.addLayer(originLabelMarker);
+          renderedFCs.add(centerFC.code);
+          bounds.extend(circle.getBounds());
+
+          currentRadiusItems.push({
+            code: centerFC.code,
+            city: centerFC.city,
+            country: centerFC.country,
+            type: centerFC.type || 'fc',
+            lat: centerFC.lat,
+            lng: centerFC.lng,
+            dist: 0,
+            isOrigin: true
+          });
+
+          fulfillmentCenters.forEach(otherFC => {
+            if (otherFC.code !== centerFC.code) {
+              if (otherFC.type === 'rail' && !userPreferences.showRailways) return;
+
+              const dist = calculateDistance(centerFC.lat, centerFC.lng, otherFC.lat, otherFC.lng);
+              if (dist <= userPreferences.radiusKm && !renderedFCs.has(otherFC.code)) {
+                renderedFCs.add(otherFC.code);
+
+                const labelMarker = createMapLabelMarker(otherFC, `${dist.toFixed(1)} km away`, false);
+                activeLayers.addLayer(labelMarker);
+
+                currentRadiusItems.push({
+                  code: otherFC.code,
+                  city: otherFC.city,
+                  country: otherFC.country,
+                  type: otherFC.type || 'fc',
+                  lat: otherFC.lat,
+                  lng: otherFC.lng,
+                  dist: dist,
+                  isOrigin: false
+                });
+              }
+            }
+          });
+        }
+      });
+
+      if (foundAny) {
+        map.fitBounds(bounds, { padding: [30, 30] });
+        currentRadiusItems.sort((a, b) => a.dist - b.dist);
+        renderSidebarList(currentRadiusItems);
+      } else {
+        alert("Location code not found or disabled in preferences.");
+        sidebarContent.innerHTML = '<div class="empty-state">No valid facility codes found.</div>';
+        countBadge.innerText = '0';
+      }
+    }
+
+    /* --- SHOW ALL FACILITIES TOGGLE --- */
+    function applyShowAllExtras() {
+      const eyeBtn = document.getElementById('show-all-btn');
+      eyeBtn.classList.add('active');
+
+      showAllLayers.clearLayers();
+      currentRadiusItems = (preShowAllItems || []).slice();
+      const renderedCodes = new Set(currentRadiusItems.map(item => item.code));
+
+      const bounds = L.latLngBounds();
+      activeCircleLayers.forEach(c => bounds.extend(c.getBounds()));
+      let any = activeCircleLayers.length > 0 || currentRadiusItems.length > 0;
+
+      fulfillmentCenters.forEach(fc => {
+        if (renderedCodes.has(fc.code)) return; // already shown by the active search - don't duplicate
+        if (fc.type === 'rail' && !userPreferences.showRailways) return;
+
+        const marker = createMapLabelMarker(fc, fc.type === 'rail' ? 'Rail Hub' : null, false);
+        showAllLayers.addLayer(marker);
+        bounds.extend([fc.lat, fc.lng]);
+        any = true;
+
+        currentRadiusItems.push({
+          code: fc.code,
+          city: fc.city,
+          country: fc.country,
+          type: fc.type || 'fc',
+          lat: fc.lat,
+          lng: fc.lng,
+          dist: null,
+          isOrigin: false
+        });
+      });
+
+      if (any) map.fitBounds(bounds, { padding: [30, 30] });
+
+      // Keep the active search's origin/nearby results at the top (sorted by distance), extras after (alphabetical)
+      currentRadiusItems.sort((a, b) => {
+        const aHas = a.dist != null;
+        const bHas = b.dist != null;
+        if (aHas && bHas) return a.dist - b.dist;
+        if (aHas) return -1;
+        if (bHas) return 1;
+        return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+      });
+
+      renderSidebarList(currentRadiusItems);
+    }
+
+    function toggleShowAllFacilities() {
+      const eyeBtn = document.getElementById('show-all-btn');
+      showingAll = !showingAll;
+
+      const sidebarContent = document.getElementById('sidebar-content');
+      const countBadge = document.getElementById('fc-count-badge');
+
+      if (showingAll) {
+        // Snapshot whatever is currently on screen (e.g. an active radius search) so it can be restored later
+        preShowAllItems = currentRadiusItems.slice();
+        applyShowAllExtras();
+      } else {
+        eyeBtn.classList.remove('active');
+        showAllLayers.clearLayers();
+
+        currentRadiusItems = preShowAllItems || [];
+        preShowAllItems = null;
+
+        if (currentRadiusItems.length > 0) {
+          renderSidebarList(currentRadiusItems);
+          if (activeCircleLayers.length > 0) {
+            const bounds = L.latLngBounds();
+            activeCircleLayers.forEach(c => bounds.extend(c.getBounds()));
+            map.fitBounds(bounds, { padding: [30, 30] });
+          }
+        } else {
+          map.setView([50.1109, 8.6821], 5);
+          sidebarContent.innerHTML = `<div class="empty-state">Enter a location above to see all facilities inside its ${userPreferences.radiusKm} km radius.</div>`;
+          countBadge.innerText = '0';
+        }
+      }
+    }
+
+    /* --- STARTUP: RESTORE SAVED SETTINGS OR APPLY A SENSIBLE DEFAULT --- */
+    (function initSettings() {
+      loadCustomFacilities();
+      renderCustomFacilitiesList();
+
+      const hadSavedSettings = loadSettingsFromStorage();
+      if (!hadSavedSettings && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        applyPreset('vscode');
+      }
+    })();
+  </script>
+</body>
+</html>
