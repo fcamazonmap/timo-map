@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1767,7 +1765,7 @@
     <div id="settings-modal-overlay">
       <div id="settings-modal">
         <div id="settings-header">
-          <h2 class="settings-header-title">Application Settings <span id="app-version-tag">v6.7</span></h2>
+          <h2 class="settings-header-title">Application Settings <span id="app-version-tag">v6.8</span></h2>
           <button type="button" class="close-modal-btn" onclick="closeSettingsModal()" title="Close settings" aria-label="Close settings">
             <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
           </button>
@@ -1989,169 +1987,180 @@
     const RAIL_ICON_SVG = `<svg class="rail-icon" viewBox="0 0 16 16" width="9" height="9"><line x1="2" y1="1" x2="2" y2="15" stroke="currentColor" stroke-width="1.6"/><line x1="14" y1="1" x2="14" y2="15" stroke="currentColor" stroke-width="1.6"/><line x1="2" y1="3.5" x2="14" y2="3.5" stroke="currentColor" stroke-width="1.6"/><line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" stroke-width="1.6"/><line x1="2" y1="12.5" x2="14" y2="12.5" stroke="currentColor" stroke-width="1.6"/></svg>`;
 
     let sheetFacilities = [
-      { code: "RBET", city: "Beringen / Betzdorf Rail Hub", country: "Luxembourg / Germany", lat: 49.7708, lng: 6.1014, type: "rail" },
-      { code: "RBAI", city: "Bad Bentheim Rail Terminal", country: "Germany", lat: 52.3031, lng: 7.1594, type: "rail" },
-      { code: "RDUIS", city: "Duisburg Intermodal Rail Terminal", country: "Germany", lat: 51.4344, lng: 6.7628, type: "rail" },
-      { code: "RLEJ", city: "Leipzig Rail Freight Hub", country: "Germany", lat: 51.4089, lng: 12.3164, type: "rail" },
-      { code: "RHAN", city: "Hannover Intermodal Rail Hub", country: "Germany", lat: 52.3759, lng: 9.7320, type: "rail" },
-      { code: "RHOF", city: "Hof / Gattendorf Rail Terminal", country: "Germany", lat: 50.3167, lng: 11.9167, type: "rail" },
-      { code: "RMAN", city: "Mannheim Freight Rail Station", country: "Germany", lat: 49.4875, lng: 8.4660, type: "rail" },
-      { code: "RLBO", city: "Luboń / Poznań Rail Hub", country: "Poland", lat: 52.3411, lng: 16.8872, type: "rail" },
-      { code: "RSWR", city: "Swarzędz Intermodal Terminal", country: "Poland", lat: 52.4136, lng: 17.0792, type: "rail" },
-      { code: "RWRO", city: "Wrocław Freight Rail Station", country: "Poland", lat: 51.1079, lng: 17.0385, type: "rail" },
-      { code: "RKTW", city: "Katowice / Gliwice Rail Hub", country: "Poland", lat: 50.2944, lng: 18.6714, type: "rail" },
-      { code: "RPRG", city: "Prague / Dobrovíz Rail Terminal", country: "Czech Republic", lat: 50.1167, lng: 14.2167, type: "rail" },
-      { code: "RDOU", city: "Douai / Lauwin-Planque Rail Node", country: "France", lat: 50.3803, lng: 3.0739, type: "rail" },
-      { code: "RLIL", city: "Lille Intermodal Rail Terminal", country: "France", lat: 50.6292, lng: 3.0573, type: "rail" },
-      { code: "RMET", city: "Metz / Ennery Freight Rail Hub", country: "France", lat: 49.2061, lng: 6.2169, type: "rail" },
-      { code: "RVEN", city: "Venlo Rail Freight Terminal", country: "Netherlands", lat: 51.3700, lng: 6.1725, type: "rail" },
-      { code: "RNOV", city: "Novara CIM Intermodal Rail Terminal", country: "Italy", lat: 45.4469, lng: 8.6211, type: "rail" },
-      { code: "RVER", city: "Verona Quadrante Europa Terminal", country: "Italy", lat: 45.4384, lng: 10.9916, type: "rail" },
-      { code: "RBCN", city: "Barcelona Rail Freight Hub", country: "Spain", lat: 41.3500, lng: 2.1333, type: "rail" },
-      { code: "RMAD", city: "Madrid Intermodal Rail Station", country: "Spain", lat: 40.4000, lng: -3.6833, type: "rail" },
-
-      { code: "DNX5", city: "Paderborn", country: "Germany", lat: 51.7189, lng: 8.7575 },
-      { code: "HAJ1", city: "Hannover", country: "Germany", lat: 52.3759, lng: 9.7320 },
-      { code: "HAJ8", city: "Hannover", country: "Germany", lat: 52.4172, lng: 9.5981 },
-      { code: "DFV1", city: "Frankfurt", country: "Germany", lat: 50.1109, lng: 8.6821 },
-      { code: "HVX6", city: "Frankfurt", country: "Germany", lat: 50.0400, lng: 8.5650 },
-      { code: "FRA1", city: "Bad Hersfeld", country: "Germany", lat: 50.8680, lng: 9.7120 },
-      { code: "FRA3", city: "Bad Hersfeld", country: "Germany", lat: 50.8690, lng: 9.7130 },
-      { code: "FRA7", city: "Frankfurt", country: "Germany", lat: 50.0379, lng: 8.5622 },
-      { code: "FRAX", city: "Frankfurt", country: "Germany", lat: 50.0400, lng: 8.5650 },
-      { code: "DHE4", city: "Friedrichsdorf", country: "Germany", lat: 50.2562, lng: 8.6432 },
-      { code: "DHE6", city: "Weiterstadt", country: "Germany", lat: 49.9012, lng: 8.5901 },
-      { code: "MHG9", city: "Frankfurt", country: "Germany", lat: 49.4875, lng: 8.4660 },
-      { code: "DOQ8", city: "Dortmund", country: "Germany", lat: 51.5136, lng: 7.4653 },
-      { code: "DTM1", city: "Dortmund", country: "Germany", lat: 51.5140, lng: 7.4660 },
-      { code: "DTM2", city: "Dortmund", country: "Germany", lat: 51.5150, lng: 7.4670 },
-      { code: "DTM3", city: "Dortmund", country: "Germany", lat: 51.5160, lng: 7.4680 },
-      { code: "DTM8", city: "Dortmund", country: "Germany", lat: 51.3389, lng: 6.5853 },
-      { code: "DTM9", city: "Dortmund", country: "Germany", lat: 51.5170, lng: 7.4690 },
-      { code: "DAO2", city: "Aachen", country: "Germany", lat: 50.7753, lng: 6.0839 },
-      { code: "DRQ1", city: "Rostock", country: "Germany", lat: 54.0924, lng: 12.0991 },
-      { code: "DNC2", city: "Nürnberg", country: "Germany", lat: 49.4521, lng: 11.0767 },
-      { code: "DNC1", city: "Nürnberg", country: "Germany", lat: 49.4530, lng: 11.0780 },
-      { code: "DNC3", city: "Nürnberg", country: "Germany", lat: 49.4540, lng: 11.0790 },
-      { code: "NUE1", city: "Nürnberg", country: "Germany", lat: 49.5333, lng: 8.3500 },
-      { code: "NUE9", city: "Nürnberg", country: "Germany", lat: 49.4521, lng: 11.0767 },
-      { code: "HBE1", city: "Nürnberg", country: "Germany", lat: 49.4550, lng: 11.0800 },
-      { code: "CDE9", city: "Nürnberg", country: "Germany", lat: 49.4550, lng: 11.0800 },
-      { code: "DBX8", city: "Bremen", country: "Germany", lat: 53.0793, lng: 8.8017 },
-      { code: "BRE2", city: "Bremen", country: "Germany", lat: 53.0131, lng: 9.0336 },
-      { code: "BRE4", city: "Bremen", country: "Germany", lat: 53.0150, lng: 9.0350 },
-      { code: "DNM4", city: "Bremen", country: "Germany", lat: 53.0800, lng: 8.8030 },
-      { code: "DNM7", city: "Bremen", country: "Germany", lat: 53.0810, lng: 8.8040 },
-      { code: "DBY2", city: "München", country: "Germany", lat: 48.1351, lng: 11.5820 },
-      { code: "MUC3", city: "München", country: "Germany", lat: 48.1883, lng: 10.8447 },
-      { code: "MUC7", city: "München", country: "Germany", lat: 48.1900, lng: 10.8460 },
-      { code: "DRP6", city: "Potsdam", country: "Germany", lat: 52.3988, lng: 13.0657 },
-      { code: "DRP2", city: "Potsdam", country: "Germany", lat: 52.4000, lng: 13.0670 },
-      { code: "XDR1", city: "Dresden", country: "Germany", lat: 51.0504, lng: 13.7373 },
-      { code: "XDEQ", city: "Dresden", country: "Germany", lat: 51.0520, lng: 13.7390 },
-      { code: "DBW5", city: "Berlin", country: "Germany", lat: 52.5200, lng: 13.4050 },
-      { code: "DBW1", city: "Berlin", country: "Germany", lat: 52.5210, lng: 13.4060 },
-      { code: "DBW6", city: "Berlin", country: "Germany", lat: 52.5220, lng: 13.4070 },
-      { code: "DBW8", city: "Berlin", country: "Germany", lat: 52.5230, lng: 13.4080 },
-      { code: "BER8", city: "Berlin", country: "Germany", lat: 52.3833, lng: 13.5167 },
-      { code: "DSY1", city: "Schkeuditz", country: "Germany", lat: 51.4150, lng: 12.3240 },
-      { code: "LEJ1", city: "Leipzig", country: "Germany", lat: 51.4089, lng: 12.3164 },
-      { code: "LEJ3", city: "Leipzig", country: "Germany", lat: 51.4233, lng: 12.2361 },
-      { code: "LEJ5", city: "Leipzig", country: "Germany", lat: 51.4110, lng: 12.3200 },
-      { code: "SDEV", city: "Kassel", country: "Germany", lat: 51.3150, lng: 9.4820 },
-      { code: "KSF7", city: "Kassel", country: "Germany", lat: 51.3128, lng: 9.4797 },
-      { code: "DMV3", city: "Magdeburg", country: "Germany", lat: 52.1205, lng: 11.6276 },
-      { code: "DAC9", city: "Aachen", country: "Germany", lat: 50.7760, lng: 6.0850 },
-      { code: "DAC2", city: "Aachen", country: "Germany", lat: 50.7770, lng: 6.0860 },
-      { code: "CFR9", city: "Erfurt", country: "Germany", lat: 50.9848, lng: 11.0299 },
-      { code: "ERF1", city: "Erfurt", country: "Germany", lat: 50.9850, lng: 11.0310 },
-      { code: "HBW2", city: "Bremen", country: "Germany", lat: 53.0820, lng: 8.8050 },
-      { code: "DSG1", city: "Stuttgart", country: "Germany", lat: 48.7758, lng: 9.1829 },
-      { code: "STR1", city: "Pforzheim", country: "Germany", lat: 48.8911, lng: 8.7025 },
-      { code: "STR2", city: "Pforzheim", country: "Germany", lat: 48.8920, lng: 8.7040 },
-      { code: "DIF4", city: "Frankfurt", country: "Germany", lat: 50.1120, lng: 8.6840 },
-      { code: "DND1", city: "Dortmund", country: "Germany", lat: 51.5180, lng: 7.4700 },
-      { code: "DBV1", city: "Berlin", country: "Germany", lat: 52.5240, lng: 13.4090 },
-      { code: "DTH1", city: "Thüringen", country: "Germany", lat: 50.9800, lng: 11.0200 },
-      { code: "PAD2", city: "Paderborn", country: "Germany", lat: 51.7200, lng: 8.7590 },
-      { code: "PAD1", city: "Paderborn", country: "Germany", lat: 51.7210, lng: 8.7600 },
-      { code: "DSH4", city: "Schwerin", country: "Germany", lat: 53.6355, lng: 11.4012 },
-      { code: "DVN1", city: "Hannover", country: "Germany", lat: 52.3770, lng: 9.7340 },
-      { code: "HAM2", city: "Hamburg", country: "Germany", lat: 53.3606, lng: 10.2222 },
-      { code: "DUS4", city: "Düsseldorf", country: "Germany", lat: 51.2277, lng: 6.7735 },
-      { code: "DUS2", city: "Düsseldorf", country: "Germany", lat: 51.2280, lng: 6.7750 },
-      { code: "CGN1", city: "Köln", country: "Germany", lat: 50.9375, lng: 6.9603 },
-      { code: "SCN2", city: "Saarbrücken", country: "Germany", lat: 49.2401, lng: 6.9969 },
-
-      { code: "MAD7", city: "Murcia", country: "Spain", lat: 40.10903673986542, lng:-3.8548238301276228 },
-      { code: "RMU1", city: "Murcia", country: "Spain", lat: 37.9922, lng: -1.1307 },
-      { code: "OVD1", city: "Oviedo", country: "Spain", lat: 43.3614, lng: -5.8593 },
-      { code: "ZAZ1", city: "Zaragoza", country: "Spain", lat: 41.6488, lng: -0.8891 },
-      { code: "SVQ1", city: "Sevilla", country: "Spain", lat: 37.2833, lng: -5.9167 },
-      { code: "MAD4", city: "San Fernando de Henares", country: "Spain", lat: 40.4667, lng: -3.5333 },
+      { code: "BCN1", city: "Barcelona", country: "Spain", lat: 41.31388, lng: 2.075355 },
+      { code: "BCN2", city: "Martorelles", country: "Spain", lat: 41.53276228, lng: 2.228920777 },
+      { code: "BCN3", city: "Barcelona", country: "Spain", lat: 41.46296, lng: 1.962732 },
+      { code: "BCN6", city: "Barcelona", country: "Spain", lat: 41.46296, lng: 1.962309 },
+      { code: "BCN8", city: "Barcelona", country: "Spain", lat: 41.5326, lng: 2.132853 },
+      { code: "BER3", city: "Brieselang", country: "Germany", lat: 52.60605492, lng: 12.97685032 },
+      { code: "BER8", city: "Berlin", country: "Germany", lat: 52.34013, lng: 13.55964 },
+      { code: "BGY1", city: "Milano", country: "Italy", lat: 45.52991, lng: 9.835822 },
+      { code: "BLQ1", city: "Modena", country: "Italy", lat: 45.03346, lng: 11.56897 },
+      { code: "BLQ8", city: "Modena", country: "Italy", lat: 44.54573, lng: 11.00045 },
+      { code: "BRE2", city: "Bremen", country: "Germany", lat: 52.88296, lng: 8.230115 },
+      { code: "BRE4", city: "Bremen", country: "Germany", lat: 53.01766, lng: 9.063215 },
+      { code: "BRQ2", city: "Brno", country: "Czech Republic", lat: 49.33977, lng: 17.30613 },
+      { code: "BTS2", city: "Bratislava", country: "Slovakia", lat: 48.27736, lng: 17.70766 },
+      { code: "BVA1", city: "Beauvais", country: "France", lat: 49.85508, lng: 2.403348 },
+      { code: "CDE9", city: "Königs Wusterhausen", country: "Germany", lat: 52.32071837, lng: 13.67868565 },
+      { code: "CDG7", city: "Paris", country: "France", lat: 49.20922, lng: 2.623959 },
+      { code: "CDG8", city: "Paris", country: "France", lat: 49.0237, lng: 2.185637 },
+      { code: "CFR9", city: "Saint-Quentin-Fallavier", country: "France", lat: 45.65745346, lng: 5.123300467 },
+      { code: "CGN1", city: "Köln", country: "Germany", lat: 50.34748, lng: 7.487473 },
+      { code: "CGN9", city: "Köln (Hürth/Wesseling area)", country: "Germany", lat: 51.13095156, lng: 6.806217047 },
+      { code: "DAC2", city: "Morlaàs", country: "France", lat: 43.32597633, lng: -0.3069503023 },
+      { code: "DAC9", city: "Bassens", country: "France", lat: 44.90051811, lng: -0.5287252434 },
+      { code: "DAO2", city: "Woippy", country: "France", lat: 49.16261538, lng: 6.159370548 },
+      { code: "DAO3", city: "Fontaine", country: "France", lat: 47.6618518, lng: 7.017506973 },
+      { code: "DAP8", city: "Premstätten", country: "Austria", lat: 46.95942, lng: 15.44314 },
+      { code: "DAR2", city: "Annecy", country: "France", lat: 45.88184363, lng: 6.079863848 },
+      { code: "DBV1", city: "Oerlenbach", country: "Germany", lat: 50.14631272, lng: 10.15334034 },
+      { code: "DBW1", city: "Mannheim", country: "Germany", lat: 49.44690115, lng: 8.567194473 },
+      { code: "DBW5", city: "Freiburg im Breisgau", country: "Germany", lat: 48.03500524, lng: 7.8102859 },
+      { code: "DBW6", city: "Sindelfingen", country: "Germany", lat: 48.701552, lng: 8.949788907 },
+      { code: "DBW8", city: "Meßkirch", country: "Germany", lat: 47.99099887, lng: 9.086165185 },
+      { code: "DBX8", city: "Giengen an der Brenz", country: "Germany", lat: 48.60936923, lng: 10.20383961 },
+      { code: "DBY2", city: "München", country: "Germany", lat: 48.44108, lng: 10.8746 },
+      { code: "DFV1", city: "Fiume Veneto", country: "Italy", lat: 45.9439777, lng: 12.72828963 },
+      { code: "DHE4", city: "Friedrichsdorf", country: "Germany", lat: 50.25933, lng: 8.661319 },
+      { code: "DHE6", city: "Weiterstadt", country: "Germany", lat: 49.89579, lng: 8.612971 },
+      { code: "DIF4", city: "Le Blanc-Mesnil", country: "France", lat: 48.95471404, lng: 2.459016739 },
+      { code: "DIF6", city: "Tremblay-en-France area (Paris/CDG)", country: "France", lat: 48.9547207, lng: 2.459029146 },
+      { code: "DMU1", city: "München (Fürstenfeldbruck area)", country: "Germany", lat: 48.22991, lng: 11.33697 },
+      { code: "DMU2", city: "München (Aying/Glonn area)", country: "Germany", lat: 48.13775, lng: 11.65399 },
+      { code: "DMU3", city: "München (Moosburg area)", country: "Germany", lat: 48.46834, lng: 11.96162 },
+      { code: "DMU5", city: "München (Aschheim/Feldkirchen area)", country: "Germany", lat: 48.25543, lng: 11.61503 },
+      { code: "DMV3", city: "Neubrandenburg", country: "Germany", lat: 53.58276828, lng: 13.29205017 },
+      { code: "DNC1", city: "Sainghin-en-Mélantois", country: "France", lat: 50.58245922, lng: 3.144716744 },
+      { code: "DNC2", city: "Avion", country: "France", lat: 50.3911183, lng: 2.830051756 },
+      { code: "DNC3", city: "Gauchy", country: "France", lat: 49.81439516, lng: 3.304974645 },
+      { code: "DND1", city: "Saint-Étienne-du-Rouvray", country: "France", lat: 49.39656191, lng: 1.116508281 },
+      { code: "DNM4", city: "Bremen", country: "Germany", lat: 53.35863, lng: 7.157863 },
+      { code: "DNM7", city: "Bremen", country: "Germany", lat: 53.52672, lng: 8.010215 },
+      { code: "DNX5", city: "Paderborn", country: "Germany", lat: 51.68727, lng: 8.72164 },
+      { code: "DOQ8", city: "Hörsching", country: "Austria", lat: 48.21166787, lng: 14.17360878 },
+      { code: "DRP2", city: "Neuwied", country: "Germany", lat: 50.4456588, lng: 7.500166616 },
+      { code: "DRP6", city: "Frankenthal (Pfalz)", country: "Germany", lat: 49.55348329, lng: 8.346341884 },
+      { code: "DRQ1", city: "Vitry-en-Artois area (Lens/Douai)", country: "France", lat: 50.39606927, lng: 2.978468087 },
+      { code: "DSG1", city: "Casteddu/Cagliari", country: "Italy", lat: 39.26428403, lng: 9.079568341 },
+      { code: "DSH4", city: "Schwerin", country: "Germany", lat: 54.3453, lng: 9.692617 },
+      { code: "DSY1", city: "Schkeuditz", country: "Germany", lat: 51.40464, lng: 12.19289 },
+      { code: "DTH1", city: "Thüringen", country: "Germany", lat: 51.04354, lng: 11.03407 },
+      { code: "DTM1", city: "Dortmund", country: "Germany", lat: 51.65271, lng: 7.595274 },
+      { code: "DTM2", city: "Dortmund", country: "Germany", lat: 51.529, lng: 7.503324 },
+      { code: "DTM3", city: "Dortmund", country: "Germany", lat: 51.53222, lng: 7.504652 },
+      { code: "DTM8", city: "Dortmund", country: "Germany", lat: 51.32621, lng: 6.693144 },
+      { code: "DTM9", city: "Dortmund", country: "Germany", lat: 51.45675, lng: 7.398289 },
+      { code: "DUS2", city: "Düsseldorf", country: "Germany", lat: 51.53573, lng: 6.588575 },
+      { code: "DUS4", city: "Düsseldorf", country: "Germany", lat: 51.14685, lng: 6.348889 },
+      { code: "DVN1", city: "Vigonza", country: "Italy", lat: 45.44132342, lng: 11.94349402 },
+      { code: "DWP1", city: "Marseille", country: "France", lat: 43.42209, lng: 5.39024 },
+      { code: "DWP2", city: "Carros", country: "France", lat: 43.78359128, lng: 7.213410716 },
+      { code: "ERF1", city: "Erfurt", country: "Germany", lat: 51.04244, lng: 11.0408 },
+      { code: "ETZ2", city: "Augny", country: "France", lat: 49.06085812, lng: 6.129715986 },
+      { code: "FCO1", city: "Roma", country: "Italy", lat: 42.16892, lng: 12.64363 },
+      { code: "FCO2", city: "Roma", country: "Italy", lat: 41.76218, lng: 13.00833 },
+      { code: "FCO9", city: "Roma", country: "Italy", lat: 42.14345, lng: 12.58593 },
+      { code: "FRA1", city: "Bad Hersfeld", country: "Germany", lat: 50.84532, lng: 9.679228 },
+      { code: "FRA3", city: "Bad Hersfeld", country: "Germany", lat: 50.85012, lng: 9.734218 },
+      { code: "FRA7", city: "Frankfurt", country: "Germany", lat: 49.4887, lng: 8.316947 },
+      { code: "FRAX", city: "Frankfurt", country: "Germany", lat: 49.7635, lng: 8.483886 },
+      { code: "GXO", city: "Bristol/Avonmouth area", country: "United Kingdom", lat: 51.54976285, lng: -2.663862405 },
+      { code: "HAJ1", city: "Hannover", country: "Germany", lat: 52.28327, lng: 10.92718 },
+      { code: "HAJ8", city: "Hannover", country: "Germany", lat: 52.4248, lng: 9.568426 },
+      { code: "HAM2", city: "Hamburg", country: "Germany", lat: 53.33161, lng: 10.22509 },
+      { code: "HBE1", city: "Nürnberg", country: "Germany", lat: 49.455, lng: 11.08 },
+      { code: "HBW2", city: "Bremen", country: "Germany", lat: 53.082, lng: 8.805 },
+      { code: "HMU3", city: "München (Ismaning/Garching area)", country: "Germany", lat: 48.33216, lng: 11.69292 },
+      { code: "HVX6", city: "Frankfurt", country: "Germany", lat: 50.04, lng: 8.565 },
+      { code: "KSF7", city: "Kassel", country: "Germany", lat: 51.40247, lng: 9.19573 },
+      { code: "KTW3", city: "Katowice", country: "Poland", lat: 50.26612, lng: 18.68619 },
+      { code: "KTW5", city: "Katowice", country: "Poland", lat: 49.94348, lng: 18.4078 },
+      { code: "LCJ2", city: "Łódź", country: "Poland", lat: 51.61624, lng: 19.35882 },
+      { code: "LCJ3", city: "Łódź", country: "Poland", lat: 51.69957, lng: 19.4886 },
+      { code: "LCJ4", city: "Łódź", country: "Poland", lat: 51.7031, lng: 19.48825 },
+      { code: "LEJ1", city: "Leipzig", country: "Germany", lat: 51.36406, lng: 12.45339 },
+      { code: "LEJ3", city: "Leipzig", country: "Germany", lat: 52.05853, lng: 11.55326 },
+      { code: "LEJ5", city: "Leipzig", country: "Germany", lat: 50.95208, lng: 12.12275 },
+      { code: "LIL1", city: "Lille", country: "France", lat: 50.39469, lng: 3.023928 },
+      { code: "LIL8", city: "Lille", country: "France", lat: 50.3936, lng: 3.024353 },
+      { code: "LIN8", city: "Milano", country: "Italy", lat: 45.49167, lng: 9.548776 },
+      { code: "LYS1", city: "Lyon", country: "France", lat: 46.7385, lng: 4.850428 },
+      { code: "LYS8", city: "Lyon", country: "France", lat: 45.67628, lng: 5.104477 },
+      { code: "MAD4", city: "San Fernando de Henares", country: "Spain", lat: 40.44675, lng: -3.4965 },
       { code: "MAD5", city: "Vicálvaro", country: "Spain", lat: 40.3953, lng: -3.6067 },
-      { code: "MAD6", city: "Illescas", country: "Spain", lat: 40.1283, lng: -3.8472 },
-      { code: "MAD8", city: "Madrid", country: "Spain", lat: 40.4720, lng: -3.5390 },
-      { code: "MAD9", city: "Alcalá de Henares", country: "Spain", lat: 40.4819, lng: -3.3635 },
+      { code: "MAD6", city: "Illescas", country: "Spain", lat: 40.0937, lng: -3.82944 },
+      { code: "MAD7", city: "Illescas", country: "Spain", lat: 40.10926559, lng: -3.854819442 },
+      { code: "MAD8", city: "Madrid", country: "Spain", lat: 40.27992, lng: -3.68164 },
+      { code: "MAD9", city: "Alcalá de Henares", country: "Spain", lat: 40.50655552, lng: -3.321189014 },
+      { code: "MHG9", city: "Frankfurt", country: "Germany", lat: 50.02883, lng: 9.048414 },
+      { code: "MRS1", city: "Marseille", country: "France", lat: 44.52835, lng: 4.740531 },
+      { code: "MRS9", city: "Marseille", country: "France", lat: 43.62187, lng: 4.776535 },
+      { code: "MUC3", city: "München", country: "Germany", lat: 48.19946, lng: 10.85036 },
+      { code: "MUC7", city: "München", country: "Germany", lat: 48.31128, lng: 11.88201 },
+      { code: "MXP3", city: "Milano", country: "Italy", lat: 45.29175, lng: 8.403616 },
+      { code: "MXP5", city: "Milano", country: "Italy", lat: 45.07658, lng: 9.452767 },
+      { code: "MXP6", city: "Milano", country: "Italy", lat: 45.47297, lng: 8.574787 },
+      { code: "MXP8", city: "Milano", country: "Italy", lat: 45.062, lng: 9.437 },
+      { code: "NUE1", city: "Gattendorf", country: "Germany", lat: 50.34696861, lng: 11.97019762 },
+      { code: "NUE9", city: "Nürnberg", country: "Germany", lat: 49.768, lng: 11.03347 },
+      { code: "OMU1", city: "Augsburg area", country: "Germany", lat: 48.2915, lng: 10.89174 },
+      { code: "ONC1", city: "Roissy/Louvres area (Paris)", country: "France", lat: 49.92758, lng: 2.270399 },
+      { code: "ORY1", city: "Orleans", country: "France", lat: 47.96226, lng: 1.846017 },
+      { code: "ORY4", city: "Orleans", country: "France", lat: 48.59811, lng: 2.317573 },
+      { code: "OVD1", city: "Oviedo", country: "Spain", lat: 43.39031, lng: -5.76872 },
+      { code: "PAD1", city: "Paderborn", country: "Germany", lat: 51.83556, lng: 8.202258 },
+      { code: "PAD2", city: "Paderborn", country: "Germany", lat: 51.89286, lng: 9.080579 },
+      { code: "POZ1", city: "Poznan", country: "Poland", lat: 52.45036, lng: 16.70672 },
+      { code: "POZ2", city: "Poznan", country: "Poland", lat: 52.21806, lng: 15.52885 },
+      { code: "PRG2", city: "Prague", country: "Czech Republic", lat: 50.10841, lng: 14.21972 },
+      { code: "PRG9", city: "Prague", country: "Czech Republic", lat: 49.72857, lng: 13.32627 },
+      { code: "PSR2", city: "Pescara", country: "Italy", lat: 42.05198, lng: 14.75734 },
+      { code: "RBAI", city: "Bad Bentheim Rail Terminal", country: "Germany", lat: 52.3031, lng: 7.1594, type: "rail" },
+      { code: "RBCN", city: "Barcelona Rail Freight Hub", country: "Spain", lat: 41.35, lng: 2.1333, type: "rail" },
+      { code: "RBET", city: "Beringen / Betzdorf Rail Hub", country: "Luxembourg / Germany", lat: 49.7708, lng: 6.1014, type: "rail" },
+      { code: "RDOU", city: "Douai / Lauwin-Planque Rail Node", country: "France", lat: 50.3803, lng: 3.0739, type: "rail" },
+      { code: "RDUIS", city: "Duisburg Intermodal Rail Terminal", country: "Germany", lat: 51.4344, lng: 6.7628, type: "rail" },
+      { code: "RHAN", city: "Hannover Intermodal Rail Hub", country: "Germany", lat: 52.3759, lng: 9.732, type: "rail" },
+      { code: "RHOF", city: "Hof / Gattendorf Rail Terminal", country: "Germany", lat: 50.3167, lng: 11.9167, type: "rail" },
+      { code: "RKTW", city: "Katowice / Gliwice Rail Hub", country: "Poland", lat: 50.2944, lng: 18.6714, type: "rail" },
+      { code: "RLBO", city: "Luboń / Poznań Rail Hub", country: "Poland", lat: 52.3411, lng: 16.8872, type: "rail" },
+      { code: "RLEJ", city: "Leipzig Rail Freight Hub", country: "Germany", lat: 51.4089, lng: 12.3164, type: "rail" },
+      { code: "RLG1", city: "Riga", country: "Latvia", lat: 56.9496, lng: 24.1052 },
+      { code: "RLIL", city: "Lille Intermodal Rail Terminal", country: "France", lat: 50.6292, lng: 3.0573, type: "rail" },
+      { code: "RMAD", city: "Madrid Intermodal Rail Station", country: "Spain", lat: 40.4, lng: -3.6833, type: "rail" },
+      { code: "RMAN", city: "Mannheim Freight Rail Station", country: "Germany", lat: 49.4875, lng: 8.466, type: "rail" },
+      { code: "RMET", city: "Metz / Ennery Freight Rail Hub", country: "France", lat: 49.2061, lng: 6.2169, type: "rail" },
+      { code: "RMU1", city: "Murcia", country: "Spain", lat: 37.83479, lng: -1.10203 },
+      { code: "RNOV", city: "Novara CIM Intermodal Rail Terminal", country: "Italy", lat: 45.4469, lng: 8.6211, type: "rail" },
+      { code: "RPRG", city: "Prague / Dobrovíz Rail Terminal", country: "Czech Republic", lat: 50.1167, lng: 14.2167, type: "rail" },
+      { code: "RSWR", city: "Swarzędz Intermodal Terminal", country: "Poland", lat: 52.4136, lng: 17.0792, type: "rail" },
+      { code: "RVEN", city: "Venlo Rail Freight Terminal", country: "Netherlands", lat: 51.37, lng: 6.1725, type: "rail" },
+      { code: "RVER", city: "Verona Quadrante Europa Terminal", country: "Italy", lat: 45.4384, lng: 10.9916, type: "rail" },
+      { code: "RWRO", city: "Wrocław Freight Rail Station", country: "Poland", lat: 51.1079, lng: 17.0385, type: "rail" },
+      { code: "SCN2", city: "Saarbrücken", country: "Germany", lat: 49.44091, lng: 7.67852 },
+      { code: "SDEV", city: "Kassel", country: "Germany", lat: 51.52085, lng: 9.898373 },
+      { code: "STR1", city: "Pforzheim", country: "Germany", lat: 48.92234, lng: 8.724255 },
+      { code: "STR2", city: "Pforzheim", country: "Germany", lat: 48.68665, lng: 10.23955 },
+      { code: "SVQ1", city: "Sevilla", country: "Spain", lat: 37.27145, lng: -5.98836 },
+      { code: "SZZ1", city: "Szczecin", country: "Poland", lat: 53.34404, lng: 14.45278 },
+      { code: "TRN1", city: "Torino", country: "Italy", lat: 45.23534, lng: 7.977039 },
+      { code: "TRN3", city: "Torino", country: "Italy", lat: 44.8935, lng: 8.695951 },
+      { code: "WRO1", city: "Wroclaw", country: "Poland", lat: 51.04025, lng: 16.9411 },
+      { code: "WRO2", city: "Wroclaw", country: "Poland", lat: 51.03588, lng: 16.94761 },
+      { code: "WRO5", city: "Wroclaw", country: "Poland", lat: 51.27095, lng: 15.78746 },
+      { code: "XCD1", city: "Combs-la-Ville", country: "France", lat: 48.65186217, lng: 2.547416962 },
+      { code: "XCR2", city: "Denain", country: "France", lat: 50.31338363, lng: 3.371749667 },
+      { code: "XDEQ", city: "Kaiserslautern", country: "Germany", lat: 49.48622515, lng: 7.683260186 },
+      { code: "XDR1", city: "Dresden", country: "Germany", lat: 51.16583, lng: 15.02481 },
       { code: "XESA", city: "Alovera", country: "Spain", lat: 40.5962, lng: -3.2483 },
-      { code: "XESB", city: "Alovera", country: "Spain", lat: 40.5975, lng: -3.2490 },
-      { code: "BCN1", city: "Barcelona", country: "Spain", lat: 41.3167, lng: 2.1000 },
-      { code: "BCN3", city: "Barcelona", country: "Spain", lat: 41.3175, lng: 2.1010 },
-      { code: "BCN6", city: "Barcelona", country: "Spain", lat: 41.3190, lng: 2.1030 },
-      { code: "BCN8", city: "Barcelona", country: "Spain", lat: 41.3200, lng: 2.1040 },
-
-      { code: "DIF6", city: "Noisy-le-Grand", country: "France", lat: 48.8478, lng: 2.5528 },
-      { code: "DAO3", city: "Aachen / Region", country: "France", lat: 50.7753, lng: 6.0839 },
-      { code: "LYS8", city: "Lyon", country: "France", lat: 45.7640, lng: 4.8357 },
-      { code: "LYS1", city: "Lyon", country: "France", lat: 45.7650, lng: 4.8370 },
-      { code: "DWP1", city: "Marseille", country: "France", lat: 43.2980, lng: 5.3720 },
-      { code: "DWP2", city: "Marseille", country: "France", lat: 43.2965, lng: 5.3698 },
-      { code: "MRS1", city: "Marseille", country: "France", lat: 44.5600, lng: 4.7520 },
-      { code: "MRS9", city: "Marseille", country: "France", lat: 44.5583, lng: 4.7500 },
-      { code: "XCR2", city: "Lille", country: "France", lat: 50.6292, lng: 3.0573 },
-      { code: "LIL1", city: "Lille", country: "France", lat: 50.4167, lng: 3.1167 },
-      { code: "LIL8", city: "Lille", country: "France", lat: 50.3700, lng: 3.0800 },
-      { code: "XOR4", city: "Paris", country: "France", lat: 48.8580, lng: 2.3530 },
-      { code: "XOR1", city: "Paris", country: "France", lat: 48.8566, lng: 2.3522 },
-      { code: "CDG7", city: "Paris", country: "France", lat: 49.2070, lng: 2.5850 },
-      { code: "CDG8", city: "Paris", country: "France", lat: 49.2100, lng: 2.5880 },
-      { code: "ORY1", city: "Orleans", country: "France", lat: 47.9500, lng: 1.8833 },
-      { code: "ORY4", city: "Orleans", country: "France", lat: 47.9520, lng: 1.8850 },
-      { code: "BVA1", city: "Beauvais", country: "France", lat: 49.4294, lng: 2.0808 },
-
-      { code: "BGY1", city: "Milano", country: "Italy", lat: 45.6739, lng: 9.7042 },
-      { code: "LIN8", city: "Milano", country: "Italy", lat: 45.4450, lng: 9.2780 },
-      { code: "MXP3", city: "Milano", country: "Italy", lat: 45.0550, lng: 9.4300 },
-      { code: "MXP5", city: "Milano", country: "Italy", lat: 45.0583, lng: 9.4333 },
-      { code: "MXP6", city: "Milano", country: "Italy", lat: 45.0600, lng: 9.4350 },
-      { code: "MXP8", city: "Milano", country: "Italy", lat: 45.0620, lng: 9.4370 },
-      { code: "BLQ1", city: "Modena", country: "Italy", lat: 45.0333, lng: 11.5833 },
-      { code: "BLQ8", city: "Modena", country: "Italy", lat: 44.6471, lng: 10.9252 },
-      { code: "FCO1", city: "Roma", country: "Italy", lat: 42.1667, lng: 12.6500 },
-      { code: "FCO2", city: "Roma", country: "Italy", lat: 42.1690, lng: 12.6520 },
-      { code: "FCO9", city: "Roma", country: "Italy", lat: 42.1700, lng: 12.6540 },
-      { code: "PSR2", city: "Pescara", country: "Italy", lat: 42.4643, lng: 14.2142 },
-      { code: "TRN1", city: "Torino", country: "Italy", lat: 45.2167, lng: 7.9667 },
-      { code: "TRN3", city: "Torino", country: "Italy", lat: 45.2180, lng: 7.9680 },
-
-      { code: "KTW3", city: "Katowice", country: "Poland", lat: 50.2944, lng: 18.6714 },
-      { code: "KTW5", city: "Katowice", country: "Poland", lat: 50.2980, lng: 18.6750 },
-      { code: "WRO1", city: "Wroclaw", country: "Poland", lat: 51.0500, lng: 16.9667 },
-      { code: "WRO2", city: "Wroclaw", country: "Poland", lat: 51.0520, lng: 16.9680 },
-      { code: "WRO5", city: "Wroclaw", country: "Poland", lat: 51.1079, lng: 17.0385 },
-      { code: "POZ1", city: "Poznan", country: "Poland", lat: 52.4500, lng: 16.6833 },
-      { code: "POZ2", city: "Poznan", country: "Poland", lat: 52.4520, lng: 16.6850 },
-      { code: "XPO1", city: "Poznan", country: "Poland", lat: 52.4540, lng: 16.6870 },
-      { code: "SZZ1", city: "Szczecin", country: "Poland", lat: 53.3333, lng: 14.4500 },
-      { code: "LCJ2", city: "Łódź", country: "Poland", lat: 51.7592, lng: 19.4560 },
-      { code: "LCJ3", city: "Łódź", country: "Poland", lat: 51.7600, lng: 19.4570 },
-      { code: "LCJ4", city: "Łódź", country: "Poland", lat: 51.7610, lng: 19.4580 },
-      { code: "BTS2", city: "Bratislava", country: "Slovakia", lat: 48.1486, lng: 17.1077 },
-      { code: "BRQ2", city: "Brno", country: "Czech Republic", lat: 49.1951, lng: 16.6078 },
-      { code: "PRG2", city: "Prague", country: "Czech Republic", lat: 50.1167, lng: 14.2167 },
-      { code: "PRG9", city: "Prague", country: "Czech Republic", lat: 50.1180, lng: 14.2200 },
-      { code: "ETZ2", city: "Esch", country: "Luxembourg", lat: 49.4958, lng: 5.9806 },
-      { code: "RLG1", city: "Riga", country: "Latvia", lat: 56.9496, lng: 24.1052 }
+      { code: "XESB", city: "Alovera", country: "Spain", lat: 40.5975, lng: -3.249 },
+      { code: "XFRE", city: "Lyon area (Saint-Quentin-Fallavier)", country: "France", lat: 45.67091, lng: 5.12089 },
+      { code: "XOR1", city: "Paris", country: "France", lat: 48.61451, lng: 2.6045 },
+      { code: "XOR4", city: "Paris", country: "France", lat: 49.94941, lng: 2.221383 },
+      { code: "XOS1", city: "Brebières", country: "France", lat: 50.33821991, lng: 3.034875602 },
+      { code: "XPO1", city: "Poznan", country: "Poland", lat: 52.57491, lng: 15.63319 },
+      { code: "ZAZ1", city: "Zaragoza", country: "Spain", lat: 41.62651, lng: -1.01852 }
     ];
 
     function codeComparator(a, b) {
@@ -2477,59 +2486,8 @@
     }).addTo(map);
 
     let activeLayers = L.layerGroup().addTo(map);
-    let showAllLayers = L.markerClusterGroup({
-      maxClusterRadius: 45,
-      disableClusteringAtZoom: 9,
-      spiderfyOnMaxZoom: false,
-      zoomToBoundsOnClick: false,
-      showCoverageOnHover: false
-    }).addTo(map);
+    let showAllLayers = L.layerGroup().addTo(map);
     let preShowAllItems = null;
-
-    showAllLayers.on('clusterclick', function(e) {
-      const cluster = e.layer;
-      const facilities = cluster.getAllChildMarkers()
-        .map(m => m.fcData)
-        .filter(Boolean)
-        .sort(codeComparator);
-
-      const container = document.createElement('div');
-      container.className = 'cluster-popup-list';
-
-      const header = document.createElement('div');
-      header.className = 'cluster-popup-header';
-      header.textContent = `${facilities.length} facilities here`;
-      container.appendChild(header);
-
-      const zoomLink = document.createElement('div');
-      zoomLink.className = 'cluster-popup-zoom-link';
-      zoomLink.textContent = 'Zoom into this area ↗';
-      zoomLink.onclick = () => {
-        map.closePopup();
-        map.fitBounds(cluster.getBounds(), { padding: [40, 40] });
-      };
-      container.appendChild(zoomLink);
-
-      const list = document.createElement('div');
-      list.className = 'cluster-popup-items';
-      facilities.forEach(fc => {
-        const item = document.createElement('div');
-        item.className = 'cluster-popup-item' + (fc.type === 'rail' ? ' rail' : '');
-        item.innerHTML = `<strong>${fc.code}</strong><span>${fc.city}</span>`;
-        item.onclick = () => {
-          map.closePopup();
-          map.setView([fc.lat, fc.lng], Math.max(map.getZoom(), 10), { animate: true });
-          handleFacilityClickByCode(fc.code);
-        };
-        list.appendChild(item);
-      });
-      container.appendChild(list);
-
-      L.popup({ maxWidth: 240, className: 'cluster-popup-wrapper' })
-        .setLatLng(cluster.getLatLng())
-        .setContent(container)
-        .openOn(map);
-    });
 
     const SETTINGS_STORAGE_KEY = 'amzFleetTracker.settings.v1';
     const THEME_VARS = [
