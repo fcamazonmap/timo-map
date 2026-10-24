@@ -1719,6 +1719,21 @@
       min-height: 18px; margin: 0 0 12px; font-size: 13px; color: #ff8a80;
     }
     #login-screen .btn-spinner { border-color: rgba(11,31,28,0.3); border-top-color: var(--accent-text); }
+
+    #login-restoring { display: none; text-align: center; padding: 14px 0 6px; }
+    #login-screen.restoring #login-restoring { display: block; }
+    #login-screen.restoring #login-form-fields { display: none; }
+    #login-restoring .restore-spinner {
+      width: 38px; height: 38px; margin: 0 auto 18px;
+      border: 3px solid rgba(255,255,255,0.18); border-top-color: var(--accent-color);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    #login-restoring .restore-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; margin: 0 0 6px; }
+    #login-restoring .restore-sub { font-size: 13px; opacity: 0.7; margin: 0; }
+    #login-screen { transition: opacity 0.3s ease; }
+    #login-screen.fading { opacity: 0; pointer-events: none; }
+    #login-notice { min-height: 0; margin: 0 0 14px; font-size: 13px; color: #fcd34d; }
+    #login-notice:empty { display: none; }
     #logout-btn { background-color: #eaeded !important; color: #333 !important; }
     #logout-btn:hover { background-color: #d8dede !important; }
   </style>
@@ -1728,13 +1743,23 @@
   <div id="login-screen" role="dialog" aria-modal="true" aria-labelledby="login-title">
     <form class="login-card" id="login-form" autocomplete="on">
       <h1 id="login-title">Amazon Europe FC Fleet Tracker</h1>
-      <p class="login-sub">Sign in to access the map</p>
-      <label for="login-username">Username</label>
-      <input type="text" id="login-username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
-      <label for="login-password">Password</label>
-      <input type="password" id="login-password" name="password" autocomplete="current-password" required>
-      <div id="login-error" role="alert" aria-live="polite"></div>
-      <button type="submit" id="login-submit">Log in</button>
+
+      <div id="login-restoring" aria-live="polite">
+        <div class="restore-spinner"></div>
+        <p class="restore-title" id="restore-title">Welcome back</p>
+        <p class="restore-sub">Signing you back in…</p>
+      </div>
+
+      <div id="login-form-fields">
+        <p class="login-sub">Sign in to access the map</p>
+        <div id="login-notice" role="status"></div>
+        <label for="login-username">Username</label>
+        <input type="text" id="login-username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" name="password" autocomplete="current-password" required>
+        <div id="login-error" role="alert" aria-live="polite"></div>
+        <button type="submit" id="login-submit">Log in</button>
+      </div>
     </form>
   </div>
 
@@ -4012,16 +4037,19 @@
       const AUTH_URL = 'https://script.google.com/macros/s/AKfycbx9FYt89wWS2FbVsfiAGvlDAQlSicSoLqdh6m2xzpIbWH-UCQUesB6EsqmVUDGmdxwY/exec';
       const SESSION_KEY = 'amzFleetTracker.authSession.v1';
 
+      const screen = document.getElementById('login-screen');
       const form = document.getElementById('login-form');
       const userEl = document.getElementById('login-username');
       const passEl = document.getElementById('login-password');
       const errEl = document.getElementById('login-error');
+      const noticeEl = document.getElementById('login-notice');
       const btn = document.getElementById('login-submit');
       const logoutBtn = document.getElementById('logout-btn');
+      const restoreTitle = document.getElementById('restore-title');
 
-      function setBusy(busy, label) {
+      function setBusy(busy) {
         btn.disabled = busy;
-        btn.innerHTML = busy ? '<span class="btn-spinner"></span>' + label : 'Log in';
+        btn.innerHTML = busy ? '<span class="btn-spinner"></span>Checking…' : 'Log in';
       }
 
       async function callAuth(payload) {
@@ -4041,30 +4069,55 @@
 
       function unlock() {
         document.body.classList.remove('locked');
+        screen.classList.remove('restoring', 'fading');
         errEl.textContent = '';
+        noticeEl.textContent = '';
         passEl.value = '';
+        setBusy(false);
         setTimeout(function () { try { map.invalidateSize(); } catch (e) {} }, 50);
       }
 
-      function lock(message) {
+      // Smoothly fade the login screen out once access is confirmed.
+      function unlockWithFade() {
+        document.body.classList.remove('locked');
+        screen.style.display = 'flex';
+        screen.classList.add('fading');
+        try { map.invalidateSize(); } catch (e) {}
+        setTimeout(function () {
+          screen.style.display = '';
+          unlock();
+        }, 320);
+      }
+
+      function showLogin(notice, prefillUser) {
         document.body.classList.add('locked');
-        errEl.textContent = message || '';
+        screen.classList.remove('restoring', 'fading');
+        noticeEl.textContent = notice || '';
+        errEl.textContent = '';
+        passEl.value = '';
+        if (prefillUser) userEl.value = prefillUser;
         setBusy(false);
-        setTimeout(function () { userEl.focus(); }, 50);
+        setTimeout(function () { (userEl.value ? passEl : userEl).focus(); }, 50);
+      }
+
+      function showRestoring(name) {
+        document.body.classList.add('locked');
+        restoreTitle.textContent = name ? 'Welcome back, ' + name : 'Welcome back';
+        screen.classList.add('restoring');
       }
 
       form.addEventListener('submit', async function (ev) {
         ev.preventDefault();
         errEl.textContent = '';
+        noticeEl.textContent = '';
         const username = userEl.value.trim();
         const password = passEl.value;
         if (!username || !password) return;
-        setBusy(true, 'Checking…');
+        setBusy(true);
         try {
           const data = await callAuth({ action: 'login', username: username, password: password });
           if (data && data.success && data.token) {
             saveSession({ token: data.token, username: data.username || username });
-            setBusy(false);
             unlock();
           } else {
             passEl.value = '';
@@ -4081,25 +4134,39 @@
       logoutBtn.addEventListener('click', function () {
         clearSession();
         userEl.value = '';
-        passEl.value = '';
-        lock('');
+        showLogin('You have been logged out.');
       });
+
+      const REASON_MESSAGES = {
+        expired: 'Your session has expired. Please log in again.',
+        changed: 'Your password was changed. Please log in with the new password.',
+        removed: 'Your access has changed. Please log in again.'
+      };
 
       (async function checkExistingSession() {
         const saved = loadSession();
-        if (!saved || !saved.token) { lock(''); return; }
-        setBusy(true, 'Restoring session…');
+        if (!saved || !saved.token) { showLogin(''); return; }
+
+        showRestoring(saved.username);
+        const started = Date.now();
+        let data = null, failed = false;
         try {
-          const data = await callAuth({ action: 'verify', token: saved.token });
-          if (data && data.success) {
-            setBusy(false);
-            unlock();
-          } else {
-            clearSession();
-            lock('Your session has expired. Please log in again.');
-          }
+          data = await callAuth({ action: 'verify', token: saved.token });
         } catch (err) {
-          lock('Could not verify your session. Please log in again.');
+          failed = true;
+        }
+
+        // Keep the "signing you back in" view up long enough to be readable.
+        const wait = Math.max(0, 900 - (Date.now() - started));
+        await new Promise(function (r) { setTimeout(r, wait); });
+
+        if (failed) {
+          showLogin('Could not reach the login service to restore your session. Please log in again.', saved.username);
+        } else if (data && data.success) {
+          unlockWithFade();
+        } else {
+          clearSession();
+          showLogin(REASON_MESSAGES[data && data.reason] || 'Please log in again.', saved.username);
         }
       })();
     })();
