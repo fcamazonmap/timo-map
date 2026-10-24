@@ -1673,9 +1673,71 @@
         border-radius: 0;
       }
     }
+
+    /* ===== Login gate ===== */
+    body.locked #main-container { visibility: hidden; }
+    #login-screen {
+      display: none;
+      position: fixed; inset: 0; z-index: 20000;
+      align-items: center; justify-content: center;
+      padding: 20px;
+      background: radial-gradient(circle at 20% 15%, #1f3a45 0%, #16232c 55%, #0e1820 100%);
+      font-family: var(--font-body);
+    }
+    body.locked #login-screen { display: flex; }
+    .login-card {
+      width: 100%; max-width: 380px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 16px;
+      padding: 32px 28px 28px;
+      color: #eef2f1;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.16);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+    }
+    .login-card h1 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+    .login-card .login-sub { font-size: 13px; opacity: 0.7; margin: 0 0 22px; }
+    .login-card label { display: block; font-size: 12px; font-weight: 600; margin: 0 0 6px; opacity: 0.9; }
+    .login-card input {
+      width: 100%; padding: 11px 12px; margin-bottom: 16px;
+      border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
+      background: rgba(255,255,255,0.95); color: #111;
+      font-size: 14px; font-family: var(--font-body); outline: none;
+    }
+    .login-card input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(45,212,191,0.25); }
+    .login-card button[type="submit"] {
+      width: 100%; padding: 12px; border: none; border-radius: 8px;
+      background: var(--accent-color); color: var(--accent-text);
+      font-weight: 700; font-size: 14px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: background 0.2s;
+    }
+    .login-card button[type="submit"]:hover { background: var(--accent-hover); }
+    .login-card button[type="submit"]:disabled { opacity: 0.7; cursor: wait; }
+    #login-error {
+      min-height: 18px; margin: 0 0 12px; font-size: 13px; color: #ff8a80;
+    }
+    #login-screen .btn-spinner { border-color: rgba(11,31,28,0.3); border-top-color: var(--accent-text); }
+    #logout-btn { background-color: #eaeded !important; color: #333 !important; }
+    #logout-btn:hover { background-color: #d8dede !important; }
   </style>
 </head>
-<body>
+<body class="locked">
+
+  <div id="login-screen" role="dialog" aria-modal="true" aria-labelledby="login-title">
+    <form class="login-card" id="login-form" autocomplete="on">
+      <h1 id="login-title">Amazon Europe FC Fleet Tracker</h1>
+      <p class="login-sub">Sign in to access the map</p>
+      <label for="login-username">Username</label>
+      <input type="text" id="login-username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" name="password" autocomplete="current-password" required>
+      <div id="login-error" role="alert" aria-live="polite"></div>
+      <button type="submit" id="login-submit">Log in</button>
+    </form>
+  </div>
+
 
   <main id="main-container">
 
@@ -1686,6 +1748,7 @@
         <div id="dropdown-fcInput" class="autocomplete-suggestions"></div>
       </div>
       <button onclick="drawRadiusMap()">Update Map</button>
+      <button id="logout-btn" type="button" title="Log out">Log out</button>
     </section>
 
     <div id="selection-banner">
@@ -2482,6 +2545,7 @@
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
+      referrerPolicy: 'strict-origin-when-cross-origin',
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
@@ -3939,6 +4003,105 @@
       if (!hadSavedSettings && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
         applyPreset('vscode');
       }
+    })();
+  </script>
+
+  <script>
+    /* ===== Login gate ===== */
+    (function () {
+      const AUTH_URL = 'https://script.google.com/macros/s/AKfycbx9FYt89wWS2FbVsfiAGvlDAQlSicSoLqdh6m2xzpIbWH-UCQUesB6EsqmVUDGmdxwY/exec';
+      const SESSION_KEY = 'amzFleetTracker.authSession.v1';
+
+      const form = document.getElementById('login-form');
+      const userEl = document.getElementById('login-username');
+      const passEl = document.getElementById('login-password');
+      const errEl = document.getElementById('login-error');
+      const btn = document.getElementById('login-submit');
+      const logoutBtn = document.getElementById('logout-btn');
+
+      function setBusy(busy, label) {
+        btn.disabled = busy;
+        btn.innerHTML = busy ? '<span class="btn-spinner"></span>' + label : 'Log in';
+      }
+
+      async function callAuth(payload) {
+        const res = await fetch(AUTH_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+        return res.json();
+      }
+
+      function saveSession(s) { try { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch (e) {} }
+      function loadSession() {
+        try { return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null'); } catch (e) { return null; }
+      }
+      function clearSession() { try { localStorage.removeItem(SESSION_KEY); } catch (e) {} }
+
+      function unlock() {
+        document.body.classList.remove('locked');
+        errEl.textContent = '';
+        passEl.value = '';
+        setTimeout(function () { try { map.invalidateSize(); } catch (e) {} }, 50);
+      }
+
+      function lock(message) {
+        document.body.classList.add('locked');
+        errEl.textContent = message || '';
+        setBusy(false);
+        setTimeout(function () { userEl.focus(); }, 50);
+      }
+
+      form.addEventListener('submit', async function (ev) {
+        ev.preventDefault();
+        errEl.textContent = '';
+        const username = userEl.value.trim();
+        const password = passEl.value;
+        if (!username || !password) return;
+        setBusy(true, 'Checking…');
+        try {
+          const data = await callAuth({ action: 'login', username: username, password: password });
+          if (data && data.success && data.token) {
+            saveSession({ token: data.token, username: data.username || username });
+            setBusy(false);
+            unlock();
+          } else {
+            passEl.value = '';
+            errEl.textContent = (data && data.error) || 'Incorrect username or password.';
+            setBusy(false);
+            passEl.focus();
+          }
+        } catch (err) {
+          errEl.textContent = 'Could not reach the login service. Check your connection and try again.';
+          setBusy(false);
+        }
+      });
+
+      logoutBtn.addEventListener('click', function () {
+        clearSession();
+        userEl.value = '';
+        passEl.value = '';
+        lock('');
+      });
+
+      (async function checkExistingSession() {
+        const saved = loadSession();
+        if (!saved || !saved.token) { lock(''); return; }
+        setBusy(true, 'Restoring session…');
+        try {
+          const data = await callAuth({ action: 'verify', token: saved.token });
+          if (data && data.success) {
+            setBusy(false);
+            unlock();
+          } else {
+            clearSession();
+            lock('Your session has expired. Please log in again.');
+          }
+        } catch (err) {
+          lock('Could not verify your session. Please log in again.');
+        }
+      })();
     })();
   </script>
 </body>
