@@ -1677,6 +1677,21 @@
     #train-btn{position:absolute;bottom:20px;left:132px;z-index:2000;height:44px;padding:0 16px;display:flex;align-items:center;gap:6px;border-radius:22px;text-decoration:none;font-family:var(--font-display);font-weight:700;font-size:13px;background-color:var(--accent-color);color:var(--accent-text);box-shadow:0 8px 28px rgba(0,0,0,0.28);transition:transform .2s}
     #train-btn:hover{transform:scale(1.05)}
     @media (max-width:768px){#train-btn{bottom:12px;left:116px;height:40px}}
+    body:not(.authed) #sidebar::after,body:not(.authed) #route-planner::after{content:"\1F512  Log in to use";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;font-weight:700;font-size:15px;border-radius:inherit;cursor:pointer;z-index:10}
+    body:not(.authed) #settings-btn,body:not(.authed) #show-all-btn{opacity:.6}
+    #logout-btn{position:absolute;bottom:20px;left:214px;z-index:2000;height:44px;padding:0 16px;border-radius:22px;border:1px solid rgba(255,255,255,0.12);cursor:pointer;font-family:var(--font-display);font-weight:600;font-size:13px;background-color:var(--bg-header);color:var(--text-header);box-shadow:0 8px 28px rgba(0,0,0,0.28)}
+    #guest-card{display:none!important;position:absolute;top:20px;right:20px;width:300px;z-index:2000;padding:16px;border-radius:16px;background-color:var(--bg-header);color:var(--text-header);box-shadow:0 8px 28px rgba(0,0,0,0.28);font-family:var(--font-display)}
+    #guest-card b{display:block;font-size:15px;margin-bottom:6px}
+    #guest-card p{margin:0 0 12px;font-size:13px;opacity:.85;line-height:1.4}
+    .acct-btn{width:100%;height:40px;border:0;border-radius:10px;cursor:pointer;font-family:var(--font-display);font-weight:700;font-size:14px;background-color:var(--accent-color);color:var(--accent-text)}
+    .acct-btn.alt{background:transparent;color:var(--text-header);border:1px solid rgba(255,255,255,.25);margin-top:8px}
+    #acct-overlay{display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.55);align-items:center;justify-content:center;padding:16px}
+    #acct-overlay.on{display:flex}
+    #acct-box{width:100%;max-width:340px;padding:22px;border-radius:16px;background-color:var(--bg-header);color:var(--text-header);font-family:var(--font-display)}
+    #acct-box h3{margin:0 0 6px;font-size:18px}#acct-box p{margin:0 0 10px;font-size:13px;opacity:.85}
+    #acct-box input{width:100%;height:42px;margin:5px 0;padding:0 12px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:#fff;color:#111;font-size:14px;box-sizing:border-box}
+    #acct-err{min-height:18px;margin-top:8px;font-size:13px;color:#ff9d9d}
+    @media (max-width:768px){#logout-btn{bottom:12px;left:192px;height:40px}#guest-card{top:12px;right:12px;left:12px;width:auto}}
   </style>
 </head>
 <body>
@@ -1767,6 +1782,18 @@
     </button>
 
     <a id="train-btn" href="https://fcamazonmap.github.io/train-map/">Train</a>
+
+
+    <div id="guest-card"><b>Log in to unlock more</b><p id="guest-msg">Route calculator, nearby facilities, show-all and settings need an approved account.</p><button class="acct-btn" id="guest-btn">Log in / Create account</button></div>
+    <button id="logout-btn" title="Log out">Log out</button>
+    <div id="acct-overlay"><div id="acct-box">
+      <div id="acct-login"><h3>Log in</h3><p>Create an account or log in. New accounts are approved by the admin.</p>
+        <form id="acct-form"><input type="email" id="acct-email" placeholder="Email" autocomplete="email"><input type="password" id="acct-pw" placeholder="Password" autocomplete="current-password">
+        <button class="acct-btn" type="submit" id="acct-go">Log in</button><button class="acct-btn alt" type="button" id="acct-su">Create account</button></form>
+        <button class="acct-btn alt" type="button" id="acct-close">Close</button></div>
+      <div id="acct-pend" style="display:none"><h3>Almost there</h3><p id="acct-pm"></p><button class="acct-btn" id="acct-re">Check again</button><button class="acct-btn alt" id="acct-out">Log out</button><button class="acct-btn alt" id="acct-close2">Close</button></div>
+      <div id="acct-err"></div>
+    </div></div>
 
     <div id="settings-modal-overlay">
       <div id="settings-modal">
@@ -1986,6 +2013,7 @@
 
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
@@ -2590,6 +2618,7 @@
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({
             token: APPS_SCRIPT_TOKEN,
+            jwt: await (async()=>{try{const r=await window.__sb.auth.getSession();return r.data.session?r.data.session.access_token:''}catch(e){return ''}})(),
             code: fc.code,
             city: fc.city,
             country: fc.country,
@@ -3946,6 +3975,58 @@
         applyPreset('vscode');
       }
     })();
+  </script>
+
+  <script>
+  (function(){
+    const g=id=>document.getElementById(id);
+    const sb=window.supabase.createClient('https://mhbhrekyxxodctffkjdc.supabase.co','sb_publishable_06zFJOtdTiyVzG_5LF10Sw_R3mlzF7J');
+    window.__sb=sb;
+    let approved=false,status='out';
+    const err=t=>{g('acct-err').textContent=t||''};
+    function open_(on){g('acct-overlay').classList.toggle('on',on);err('')}
+    function view(){const pend=status==='pending'||status==='rejected';g('acct-login').style.display=pend?'none':'';g('acct-pend').style.display=pend?'':'none';
+      g('acct-pm').textContent=status==='rejected'?'Your account request was declined. Contact the admin if you think this is a mistake.':'Your account is waiting for admin approval. Once approved, log in again or tap Check again.';
+      g('guest-btn').textContent=pend?'Check approval status':'Log in / Create account';
+      g('guest-msg').textContent=pend?'Your account is waiting for admin approval.':'Route calculator, nearby facilities, show-all and settings need an approved account.'}
+    function openLogin(){view();open_(true)}
+    async function check(){
+      let session=null;try{session=(await sb.auth.getSession()).data.session}catch(e){}
+      if(!session){status='out';approved=false}
+      else{let p=null;try{p=(await sb.from('profiles').select('status').eq('id',session.user.id).maybeSingle()).data}catch(e){}
+        status=p?p.status:'pending';approved=status==='approved'}
+      document.body.classList.toggle('authed',approved);g('logout-btn').textContent=approved?'Log out':'Log in';view();
+      if(approved)open_(false);
+    }
+    ['toggleShowAllFacilities','openSettingsModal','calculateAndDrawRoute','triggerBoxRoute','addFacilityFromForm','importFacilitiesFromCSV'].forEach(n=>{
+      const f=window[n];if(typeof f!=='function')return;
+      window[n]=function(){if(!approved){openLogin();return}return f.apply(this,arguments)};
+    });
+    async function go(up){
+      const email=g('acct-email').value.trim(),pw=g('acct-pw').value;
+      if(!email||!pw){err('Enter your email and password.');return}
+      err('');
+      try{
+        const r=up?await sb.auth.signUp({email:email,password:pw,options:{emailRedirectTo:location.origin+location.pathname}}):await sb.auth.signInWithPassword({email:email,password:pw});
+        if(r.error)err(r.error.message);
+        else if(r.data&&r.data.session)await check();
+        else err('Account created. Confirm your email if asked, then log in. The admin must approve it before you get access.');
+      }catch(x){err('Could not reach the login server. Try again.')}
+    }
+    g('acct-form').onsubmit=e=>{e.preventDefault();go(false)};
+    g('acct-su').onclick=()=>go(true);
+    g('guest-btn').onclick=()=>status==='pending'||status==='rejected'?check().then(openLogin):openLogin();
+    g('acct-re').onclick=check;
+    const out=async()=>{try{await sb.auth.signOut()}catch(e){}location.reload()};
+    g('acct-out').onclick=out;g('logout-btn').onclick=()=>approved?out():openLogin();
+    g('acct-close').onclick=g('acct-close2').onclick=()=>open_(false);
+    sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT')check()});
+    document.addEventListener('click',function(e){
+      if(approved)return;
+      if(e.target.closest('#sidebar,#route-planner,#settings-btn,#show-all-btn')){e.preventDefault();e.stopPropagation();openLogin()}
+    },true);
+    check();
+  })();
   </script>
 </body>
 </html>
