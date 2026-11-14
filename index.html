@@ -1677,8 +1677,9 @@
     #train-btn{position:absolute;bottom:20px;left:132px;z-index:2000;height:44px;padding:0 16px;display:flex;align-items:center;gap:6px;border-radius:22px;text-decoration:none;font-family:var(--font-display);font-weight:700;font-size:13px;background-color:var(--accent-color);color:var(--accent-text);box-shadow:0 8px 28px rgba(0,0,0,0.28);transition:transform .2s}
     #train-btn:hover{transform:scale(1.05)}
     @media (max-width:768px){#train-btn{bottom:12px;left:116px;height:40px}}
-    body:not(.authed) #sidebar::after,body:not(.authed) #route-planner::after{content:"\1F512  Log in to use";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;font-weight:700;font-size:15px;border-radius:inherit;cursor:pointer;z-index:10}
+    body:not(.authed) #sidebar::after,body:not(.authed) #route-planner::after{content:"\1F512  Log in to use";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(12,14,18,.82);color:#fff;font-weight:700;font-size:15px;border-radius:inherit;cursor:pointer;z-index:10}
     body:not(.authed) .custom-map-label:hover .extra-info{display:none!important}
+    body:not(.authed) .custom-map-label:not(.origin-label)>span{color:transparent!important;text-shadow:0 0 6px rgba(130,130,130,.95)!important;user-select:none}
     body:not(.authed) #tab-preferences h3::after{content:" \1F512"}
     #logout-btn{position:absolute;bottom:20px;left:214px;z-index:2000;height:44px;padding:0 16px;border-radius:22px;border:1px solid rgba(255,255,255,0.12);cursor:pointer;font-family:var(--font-display);font-weight:600;font-size:13px;background-color:var(--bg-header);color:var(--text-header);box-shadow:0 8px 28px rgba(0,0,0,0.28)}
     #guest-card{display:none!important;position:absolute;top:20px;right:20px;width:300px;z-index:2000;padding:16px;border-radius:16px;background-color:var(--bg-header);color:var(--text-header);box-shadow:0 8px 28px rgba(0,0,0,0.28);font-family:var(--font-display)}
@@ -1686,8 +1687,8 @@
     #guest-card p{margin:0 0 12px;font-size:13px;opacity:.85;line-height:1.4}
     .acct-btn{width:100%;height:40px;border:0;border-radius:10px;cursor:pointer;font-family:var(--font-display);font-weight:700;font-size:14px;background-color:var(--accent-color);color:var(--accent-text)}
     .acct-btn.alt{background:transparent;color:var(--text-header);border:1px solid rgba(255,255,255,.25);margin-top:8px}
-    #acct-overlay{display:flex;position:fixed;inset:0;z-index:20000;background:rgba(0,0,0,.55);-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0);align-items:center;justify-content:center;padding:16px;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s ease,backdrop-filter .3s ease,visibility 0s linear .3s}
-    #acct-overlay.on{opacity:1;visibility:visible;pointer-events:auto;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:opacity .25s ease,backdrop-filter .3s ease}
+    #acct-overlay{display:flex;position:fixed;inset:0;z-index:20000;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:16px;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s ease,visibility 0s linear .3s}
+    #acct-overlay.on{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .25s ease}
     #acct-box{transform:translateY(28px) scale(.92);opacity:0;transition:transform .4s cubic-bezier(.2,.9,.3,1.25),opacity .25s ease}
     #acct-overlay.on #acct-box{transform:none;opacity:1}
     #acct-overlay.on #acct-box>div>*{animation:acctUp .45s cubic-bezier(.2,.8,.3,1) both}
@@ -3765,8 +3766,8 @@
         const isRail = fc.type === 'rail';
         let extraClass = isRail ? 'rail-label' : '';
         htmlContent = `
-          <div class="custom-map-label ${extraClass}" data-code="${fc.code}">
-            <span>${isRail ? RAIL_ICON_SVG : ''}${fc.code}</span>
+          <div class="custom-map-label ${extraClass}" data-code="${window.__mask ? window.__mask(fc.code) : fc.code}">
+            <span>${isRail ? RAIL_ICON_SVG : ''}${window.__mask ? window.__mask(fc.code) : fc.code}</span>
             ${distText ? `<div class="extra-info">${distText}</div>` : ''}
           </div>
         `;
@@ -3992,13 +3993,27 @@
     const sb=window.supabase.createClient('https://mhbhrekyxxodctffkjdc.supabase.co','sb_publishable_06zFJOtdTiyVzG_5LF10Sw_R3mlzF7J');
     window.__sb=sb;
     let approved=false,status='out';
+    window.__mask=c=>approved?c:String(c).replace(/[A-Za-z0-9]/g,'8');
     const err=t=>{g('acct-err').textContent=t||'';if(t){const b=g('acct-box');b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake')}};
     function open_(on){g('acct-overlay').classList.toggle('on',on);err('')}
     function view(){const pend=status==='pending'||status==='rejected';g('acct-login').style.display=pend?'none':'';g('acct-pend').style.display=pend?'':'none';
       g('acct-pm').textContent=status==='rejected'?'Your account request was declined. Contact the admin if you think this is a mistake.':'Your account is waiting for admin approval. Once approved, log in again or tap Check again.';
       g('guest-btn').textContent=pend?'Check approval status':'Log in / Create account';
       g('guest-msg').textContent=pend?'Your account is waiting for admin approval.':'Route calculator, nearby facilities, show-all and settings need an approved account.'}
-    function openLogin(){view();open_(true)}
+    const DEF='Create an account or log in. New accounts are approved by the admin.';
+    function openLogin(msg){view();g('acct-login').querySelector('p').textContent=typeof msg==='string'?msg:DEF;open_(true)}
+    const GK='fcGuestSearches';
+    const used=()=>{try{return JSON.parse(localStorage.getItem(GK)||'[]')}catch(e){return[]}};
+    const dr=window.drawRadiusMap;
+    window.drawRadiusMap=function(){
+      if(!approved){
+        const codes=g('fcInput').value.split(',').map(x=>x.trim().toUpperCase()).filter(c=>c&&fulfillmentCenters.some(f=>f.code===c));
+        const u=used(),fresh=codes.filter(c=>u.indexOf(c)<0);
+        if(u.length+fresh.length>3){openLogin('You have used your 3 free facility searches. Log in to keep searching.');return}
+        if(fresh.length){try{localStorage.setItem(GK,JSON.stringify(u.concat(fresh)))}catch(e){}}
+      }
+      return dr.apply(this,arguments);
+    };
     async function check(){
       let session=null;try{session=(await sb.auth.getSession()).data.session}catch(e){}
       if(!session){status='out';approved=false}
@@ -4018,14 +4033,14 @@
       try{
         const r=up?await sb.auth.signUp({email:email,password:pw,options:{emailRedirectTo:location.origin+location.pathname}}):await sb.auth.signInWithPassword({email:email,password:pw});
         if(r.error)err(r.error.message);
-        else if(r.data&&r.data.session)await check();
+        else if(r.data&&r.data.session){await check();if(approved)location.reload()}
         else err('Account created. Confirm your email if asked, then log in. The admin must approve it before you get access.');
       }catch(x){err('Could not reach the login server. Try again.')}
     }
     g('acct-form').onsubmit=e=>{e.preventDefault();go(false)};
     g('acct-su').onclick=()=>go(true);
     g('guest-btn').onclick=()=>status==='pending'||status==='rejected'?check().then(openLogin):openLogin();
-    g('acct-re').onclick=check;
+    g('acct-re').onclick=()=>check().then(()=>{if(approved)location.reload()});
     const out=async()=>{try{await sb.auth.signOut()}catch(e){}location.reload()};
     g('acct-out').onclick=out;g('logout-btn').onclick=()=>approved?out():openLogin();
     g('acct-close').onclick=g('acct-close2').onclick=()=>open_(false);
