@@ -1702,6 +1702,58 @@
     #acct-box input{width:100%;height:42px;margin:5px 0;padding:0 12px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:#fff;color:#111;font-size:14px;box-sizing:border-box}
     #acct-err{min-height:18px;margin-top:8px;font-size:13px;color:#ff9d9d}
     @media (max-width:768px){#logout-btn{bottom:12px;left:192px;height:40px}#guest-card{top:12px;right:12px;left:12px;width:auto}}
+    /* ===== Phone layout (<=768px) ===== */
+    .m-only,#m-menu{display:none}
+    @media (max-width:768px){
+      .m-only{display:flex}
+      #m-menu{display:block}
+      #settings-btn,#show-all-btn,#train-btn,#logout-btn{display:none!important}
+      #controls,#route-planner,#sidebar,#selection-banner{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+      #controls{top:calc(12px + env(safe-area-inset-top,0px));left:12px;right:12px;max-width:none;height:52px;padding:0 6px 0 12px;border-radius:26px;flex-wrap:nowrap;gap:8px;background:var(--bg-header)}
+      #controls label,#controls>button:not(.m-ic){display:none}
+      #controls .input-wrapper{flex:1;min-width:0;display:block}
+      #controls input[type="text"]{width:100%;height:40px;padding:0;border:0;border-radius:0;background:transparent;color:var(--text-header);font-size:16px}
+      #controls input::placeholder{text-transform:none;color:color-mix(in srgb,var(--text-header) 55%,transparent)}
+      #controls .m-ic{width:40px;height:40px;min-width:40px;padding:0;border-radius:50%;background:transparent;color:color-mix(in srgb,var(--text-header) 70%,transparent);align-items:center;justify-content:center;cursor:pointer}
+      #m-more{position:fixed;top:calc(76px + env(safe-area-inset-top,0px));right:12px;width:48px;height:48px;border-radius:50%;border:1px solid rgba(255,255,255,.12);background:var(--bg-header);color:var(--text-header);align-items:center;justify-content:center;z-index:1800;box-shadow:0 8px 28px rgba(0,0,0,.28);cursor:pointer;padding:0}
+      #m-menu{position:fixed;top:calc(132px + env(safe-area-inset-top,0px));right:12px;width:220px;padding:6px;border-radius:18px;background:var(--bg-header);color:var(--text-header);z-index:1850;box-shadow:0 12px 36px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.12);opacity:0;visibility:hidden;transform:translateY(-8px) scale(.96);transform-origin:top right;transition:opacity .18s ease,transform .22s cubic-bezier(.2,.9,.3,1.2),visibility 0s linear .22s;font-family:var(--font-display)}
+      #m-menu.on{opacity:1;visibility:visible;transform:none;transition:opacity .18s ease,transform .22s cubic-bezier(.2,.9,.3,1.2)}
+      #m-menu button{display:flex;align-items:center;gap:12px;width:100%;padding:12px 12px;border:0;background:none;color:inherit;font:600 15px var(--font-display);text-align:left;border-radius:12px;cursor:pointer}
+      #m-menu button:active{background:rgba(255,255,255,.08)}
+      #m-menu button+button{margin-top:1px}
+      #m-menu .sep{height:1px;margin:4px 8px;background:rgba(255,255,255,.12)}
+      #m-menu button.danger{color:#ff6b6b}
+      #m-menu svg{width:20px;height:20px;flex:none;fill:currentColor}
+      #m-menu svg.st{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+      #selection-banner{top:calc(132px + env(safe-area-inset-top,0px));left:12px;right:72px;bottom:auto;max-width:none}
+      #route-planner{left:8px;right:8px;top:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));width:auto;max-width:none;border-radius:28px;background:var(--bg-header);color:var(--text-header);z-index:1600;padding-top:18px;border:1px solid rgba(255,255,255,.12)}
+      #route-planner::before{content:"";position:absolute;top:8px;left:50%;width:38px;height:4px;margin-left:-19px;border-radius:2px;background:color-mix(in srgb,var(--text-header) 35%,transparent)}
+      #route-planner-header{display:flex;align-items:center;gap:12px;margin:0 12px 12px;padding:14px;border-radius:16px;background:rgba(255,255,255,.07);color:color-mix(in srgb,var(--text-header) 60%,transparent);cursor:pointer;transition:color .2s}
+      #route-planner-header h2{font-size:15px;font-weight:600;margin:0;color:inherit}
+      #route-planner-header svg{width:20px;height:20px;flex:none}
+      #route-planner.open #route-planner-header{background:none;color:var(--text-header);margin-bottom:0;padding-bottom:8px}
+      #route-planner.open #route-planner-header h2{font-weight:700}
+      #route-planner-body{max-height:0;overflow:hidden;padding:0 14px;background:none;transition:max-height .32s ease}
+      #route-planner.open #route-planner-body{max-height:340px;overflow:visible;padding-bottom:14px}
+      #route-planner .route-field label{display:none}
+      #route-planner .route-fields-with-swap{display:flex;align-items:center;gap:10px}
+      #route-planner .route-fields-stack{flex:1;min-width:0}
+      #route-planner .route-field{margin:0 0 8px}
+      #route-planner input[type="text"]{width:100%;height:46px;padding:0 14px;border:0;border-radius:14px;background:rgba(255,255,255,.07);color:var(--text-header);font-size:16px;box-sizing:border-box}
+      #route-planner input::placeholder{color:color-mix(in srgb,var(--text-header) 50%,transparent)}
+      #route-planner .route-side-buttons{display:flex;flex-direction:column;gap:6px}
+      #route-planner .route-side-buttons button{width:40px;height:40px;padding:0;border:0;background:none;display:flex;align-items:center;justify-content:center}
+      #route-planner .route-side-buttons svg{width:24px;height:24px;fill:currentColor}
+      #swap-route-btn{color:#4f9dff!important}#reset-route-btn{color:#ff6b6b!important}
+      #route-planner .route-actions{margin-top:4px}
+      #btn-calc-route{width:100%;height:50px;border:0;border-radius:14px;font-size:16px;font-weight:700;background:var(--accent-color);color:var(--accent-text)}
+      #route-planner .autocomplete-suggestions{top:auto;bottom:100%;z-index:10}
+      #sidebar{display:none;top:calc(132px + env(safe-area-inset-top,0px));bottom:calc(96px + env(safe-area-inset-bottom,0px));left:8px;right:8px;width:auto;max-height:none;border-radius:24px;z-index:1700}
+      #sidebar.m-open{display:flex}
+      #sidebar-header{align-items:center}
+      #m-side-x{margin-left:10px;width:32px;height:32px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:inherit;font-size:16px;cursor:pointer;align-items:center;justify-content:center}
+      .leaflet-bottom{margin-bottom:calc(86px + env(safe-area-inset-bottom,0px))}
+    }
   </style>
 </head>
 <body>
@@ -4002,6 +4054,7 @@
       g('guest-msg').textContent=pend?'Your account is waiting for admin approval.':'Route calculator, nearby facilities, show-all and settings need an approved account.'}
     const DEF='Create an account or log in. New accounts are approved by the admin.';
     function openLogin(msg){view();g('acct-login').querySelector('p').textContent=typeof msg==='string'?msg:DEF;open_(true)}
+    window.__gate={ok:()=>approved,login:openLogin};
     const GK='fcGuestSearches';
     const used=()=>{try{return JSON.parse(localStorage.getItem(GK)||'[]')}catch(e){return[]}};
     const dr=window.drawRadiusMap;
@@ -4050,6 +4103,57 @@
       if(e.target.closest('#sidebar,#route-planner,#tab-preferences,#tab-facilities .settings-tab-content,.custom-map-label,#map .leaflet-marker-icon:not(.marker-cluster)')){e.preventDefault();e.stopPropagation();openLogin()}
     },true);
     check();
+  })();
+  </script>
+
+  <script>
+  (function(){
+    const $=id=>document.getElementById(id);
+    const mk=(t,id,cls,html)=>{const e=document.createElement(t);if(id)e.id=id;if(cls)e.className=cls;e.innerHTML=html;return e};
+    const st=d=>'<svg class="st" viewBox="0 0 24 24">'+d+'</svg>';
+    // top search pill: search icon + filter icon
+    const c=$('controls');
+    const si=mk('button','m-search','m-only m-ic','<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>');
+    si.setAttribute('aria-label','Search');si.onclick=()=>drawRadiusMap();
+    c.insertBefore(si,c.querySelector('.input-wrapper'));
+    const fb=mk('button','m-filter','m-only m-ic','<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>');
+    fb.setAttribute('aria-label','Search options');
+    fb.onclick=()=>{if(!window.__gate.ok()){window.__gate.login();return}$('settings-btn').click();if(typeof toggleSettingsTab==='function')toggleSettingsTab('tab-preferences')};
+    c.appendChild(fb);
+    // "..." button + menu
+    const more=mk('button','m-more','m-only','<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>');
+    more.setAttribute('aria-label','Menu');
+    const ic=id=>{const b=$(id),v=b&&b.querySelector('svg');return v?v.outerHTML:''};
+    const menu=mk('div','m-menu','',
+      '<button data-a="settings">'+ic('settings-btn')+'Settings</button>'+
+      '<button data-a="vis">'+ic('show-all-btn')+'Visibility</button>'+
+      '<button data-a="near">'+st('<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>')+'<span id="m-near">Nearby list</span></button>'+
+      '<button data-a="train">'+st('<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M9 21l2-4M15 21l-2-4"/>')+'Train</button>'+
+      '<div class="sep"></div>'+
+      '<button data-a="auth" id="m-auth" class="danger">'+st('<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>')+'<span>Log out</span></button>');
+    document.body.appendChild(more);document.body.appendChild(menu);
+    const close=()=>menu.classList.remove('on');
+    more.onclick=e=>{e.stopPropagation();const ok=window.__gate.ok();
+      $('m-auth').querySelector('span').textContent=ok?'Log out':'Log in';$('m-auth').classList.toggle('danger',ok);
+      $('m-near').textContent='Nearby list'+($('fc-count-badge').textContent!=='0'?' ('+$('fc-count-badge').textContent+')':'');
+      menu.classList.toggle('on')};
+    document.addEventListener('click',e=>{if(!menu.contains(e.target)&&e.target!==more&&!more.contains(e.target))close()});
+    menu.onclick=e=>{const b=e.target.closest('button');if(!b)return;close();const a=b.dataset.a;
+      if(a==='settings')$('settings-btn').click();
+      else if(a==='vis')$('show-all-btn').click();
+      else if(a==='near'){if(!window.__gate.ok())window.__gate.login();else $('sidebar').classList.toggle('m-open')}
+      else if(a==='train')location.href='https://fcamazonmap.github.io/train-map/';
+      else if(a==='auth')$('logout-btn').click()};
+    // nearby list close button
+    const x=mk('button','m-side-x','m-only','&#10005;');x.onclick=()=>$('sidebar').classList.remove('m-open');$('sidebar-header').appendChild(x);
+    // route calculator bottom sheet
+    const rp=$('route-planner'),rh=$('route-planner-header');
+    rh.insertAdjacentHTML('afterbegin','<svg class="m-only" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8.5 18H15a3.5 3.5 0 000-7H9a3.5 3.5 0 010-7h6.5"/></svg>');
+    rh.onclick=()=>{if(matchMedia('(max-width:768px)').matches)rp.classList.toggle('open')};
+    // shorter placeholders on phones
+    const mq=matchMedia('(max-width:768px)'),rf=$('route-from'),rt=$('route-to'),ph=[rf.placeholder,rt.placeholder,$('fcInput').placeholder];
+    const setPh=()=>{if(mq.matches){rf.placeholder='From: DTM3 or coordinates';rt.placeholder='To: STR2 or coordinates';$('fcInput').placeholder='Search FC or rail'}else{rf.placeholder=ph[0];rt.placeholder=ph[1];$('fcInput').placeholder=ph[2]}};
+    setPh();mq.addEventListener('change',setPh);
   })();
   </script>
 </body>
